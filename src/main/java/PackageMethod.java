@@ -1,12 +1,19 @@
 import java.util.Arrays;
 
 class PackageMethod implements Comparable<PackageMethod> {
-    String version;
+    VersionM version;
     String method;
     Long packageId;
 
     public PackageMethod(String version, String method, Long packageId) {
-        this.version = version;
+        int[] splitVersion = Arrays.stream(version.split("\\.")).mapToInt(Integer::parseInt).toArray();
+
+        int major = splitVersion[0];
+        int minor = splitVersion.length > 1 ? splitVersion[1] : -1;
+        int patch = splitVersion.length > 2 ? splitVersion[2] : -1;
+
+        this.version = new VersionM(major, minor, patch, splitVersion.length);
+
         this.method = method;
         this.packageId = packageId;
     }
@@ -18,29 +25,6 @@ class PackageMethod implements Comparable<PackageMethod> {
      */
     @Override
     public int compareTo(PackageMethod o) {
-        int[] first_split = Arrays.stream(this.version.split("\\.")).mapToInt(Integer::parseInt).toArray();
-        int[] second_split = Arrays.stream(o.version.split("\\.")).mapToInt(Integer::parseInt).toArray();
-
-        if (first_split.length == 1) {
-            return Integer.compare(first_split[0], second_split[0]);
-        }
-        else if (first_split.length == 2) {
-            if (first_split[0] < second_split[0]) {
-                return -1;
-            } else if (first_split[0] > second_split[0]) {
-                return 1;
-            } else return Integer.compare(first_split[1], second_split[1]);
-        }
-        else {
-            if (first_split[0] < second_split[0]) {
-                return -1;
-            } else if (first_split[0] > second_split[0]) {
-                return 1;
-            } else if (first_split[1] < second_split[1]) {
-                return -1;
-            } else if (first_split[1] > second_split[1]) {
-                return 1;
-            } else return Integer.compare(first_split[2], second_split[2]);
-        }
+        return this.version.compareTo(o.version);
     }
 }
