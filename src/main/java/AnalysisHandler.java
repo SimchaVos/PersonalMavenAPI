@@ -8,49 +8,32 @@ import org.jooq.impl.DSL;
 import java.util.*;
 
 public class AnalysisHandler {
-    public static Map<Long, List<PackageVersion>> createPackageIdMap(Result<Record3<Object, Object, Object>> results) {
-        Map<Long, List<PackageVersion>> packageIdMap = new HashMap<>();
+    public static Map<Long, PriorityQueue<PackageMethod>> createPackageIdMap(Result<Record3<Object, Object, Object>> results) {
+        Map<Long, PriorityQueue<PackageMethod>> packageIdMap = new HashMap<>();
 
         //           Method, PackageID, Version
         for (Record3<Object, Object, Object> record : results) {
             String method = (String) record.value1();
             Long packageId = (Long) record.value2();
             String version = (String) record.value3();
-            packageIdMap.computeIfAbsent(packageId, k -> new ArrayList<>());
+            packageIdMap.computeIfAbsent(packageId, k -> new PriorityQueue<>());
 
-            packageIdMap.get(packageId).add(new PackageVersion(version, method, packageId));
+            packageIdMap.get(packageId).add(new PackageMethod(version, method, packageId));
         }
 
         return packageIdMap;
     }
 
-    public static Map<Long, Set<String>> getAllVersions(Map<Long, List<PackageVersion>> packageIdMap) {
+    public static Map<Long, Set<String>> getAllVersions(Map<Long, PriorityQueue<PackageMethod>> packageIdMap) {
         Map<Long, Set<String>> versionsPerPackageId = new HashMap<>();
 
-        for (List<PackageVersion> versions : packageIdMap.values()) {
-            for (PackageVersion version : versions) {
+        for (PriorityQueue<PackageMethod> versions : packageIdMap.values()) {
+            for (PackageMethod version : versions) {
                 versionsPerPackageId.computeIfAbsent(version.packageId, k -> new HashSet<>());
                 versionsPerPackageId.get(version.packageId).add(version.version);
             }
         }
         return versionsPerPackageId;
-    }
-    public static int compareTo(String first, String second) {
-        int[] first_split = Arrays.stream(first.split("\\.")).mapToInt(Integer::parseInt).toArray();
-        int[] second_split = Arrays.stream(second.split("\\.")).mapToInt(Integer::parseInt).toArray();
-        if (first_split[0] < second_split[0]) {
-            return 1;
-        }
-        else if (first_split[0] > second_split[0]) {
-            return -1;
-        }
-        else if (first_split[1] < second_split[1]) {
-            return 1;
-        }
-        else if (first_split[1] > second_split[1]) {
-            return -1;
-        }
-        else return Integer.compare(second_split[2], first_split[2]);
     }
 
     public static @NotNull

@@ -23,13 +23,13 @@ public class Main {
         Result<Record3<Object, Object, Object>> results = AnalysisHandler.findMethods(context);
         //Ideally sort results based on column fasten_uri
 
-        Map<Long, List<PackageVersion>> packageIdMap = AnalysisHandler.createPackageIdMap(results);
+        Map<Long, PriorityQueue<PackageMethod>> packageIdMap = AnalysisHandler.createPackageIdMap(results);
         Map<Long, Set<String>> versionsPerPackageId = AnalysisHandler.getAllVersions(packageIdMap);
 
         Map<Long, Integer> incursions = new HashMap<>();
 
-        for (List<PackageVersion> versions : packageIdMap.values()) {
-            System.out.println(versions);
+        for (PriorityQueue<PackageMethod> packageMethod : packageIdMap.values()) {
+            System.out.println(packageMethod);
         }
 
 //        while (!results.isEmpty()) {
