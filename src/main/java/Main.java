@@ -31,6 +31,7 @@ public class Main {
         for (Map<String, PriorityQueue<PackageMethod>> methods : packageIdMap.values()) {
             for (PriorityQueue<PackageMethod> versions : methods.values()) {
                 Long packageId = versions.peek().packageId;
+                String metho = versions.peek().method;
                 VersionM introduced = versions.peek().version;
                 // Find all minor and patch releases higher than the introduced. They should be featured in versions.
                 Set<VersionM> higherVersions = new HashSet<>();
