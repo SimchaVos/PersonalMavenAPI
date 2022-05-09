@@ -31,10 +31,12 @@ public class Main {
         for (Map<String, PriorityQueue<PackageMethod>> methods : packageIdMap.values()) {
             for (PriorityQueue<PackageMethod> versions : methods.values()) {
                 Long packageId = versions.peek().packageId;
-                String metho = versions.peek().method;
                 VersionM introduced = versions.peek().version;
-                // Find all minor and patch releases higher than the introduced. They should be featured in versions.
+
                 Set<VersionM> higherVersions = new HashSet<>();
+
+                // Identify all versions that have been released, which have a version number higher than the number at
+                // which the method was introduced. Note that major releases don't count.
                 for (VersionM version : versionsPerPackageId.get(versions.peek().packageId)) {
                     if (version.major != introduced.major) break;
                     if (version.numberOfDigits > 1) {
@@ -47,12 +49,16 @@ public class Main {
                         }
                     }
                 }
-                // Every version in higherVersions should be featured in the versions PQ.
+                // Every version in higherVersions should have a corresponding method record in the database (versions
+                // priority queue).
                 while (!versions.isEmpty()) {
                     VersionM curr = versions.poll().version;
                     higherVersions.removeIf(curr::equals);
                 }
                 incursions.putIfAbsent(packageId, 0);
+
+                // Now we calculate all the incursions. Each time there are higherVersions which do not have a corresponding
+                // method record, we increment the incursions of the package.
                 if (!higherVersions.isEmpty()) {
                     Integer curr = incursions.get(packageId);
                     incursions.put(packageId, curr + 1);

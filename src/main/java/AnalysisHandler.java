@@ -8,6 +8,13 @@ import org.jooq.impl.DSL;
 import java.util.*;
 
 public class AnalysisHandler {
+
+    /**
+     * Puts together a map, which maps the ID of a package to a map containing the method string and a priority
+     * queue which contains all the method records.
+     * @param results
+     * @return
+     */
     public static Map<Long, Map<String, PriorityQueue<PackageMethod>>> createPackageIdMap(Result<Record3<Object, Object, Object>> results) {
         Map<Long, Map<String, PriorityQueue<PackageMethod>>> packageIdMap = new HashMap<>();
 
@@ -24,6 +31,11 @@ public class AnalysisHandler {
         return packageIdMap;
     }
 
+    /**
+     * Gets all the versions of every package, and returns those in a map.
+     * @param packageIdMap
+     * @return
+     */
     public static Map<Long, Set<VersionM>> getAllVersions(Map<Long, Map<String, PriorityQueue<PackageMethod>>> packageIdMap) {
         Map<Long, Set<VersionM>> versionsPerPackageId = new HashMap<>();
 
@@ -38,6 +50,11 @@ public class AnalysisHandler {
         return versionsPerPackageId;
     }
 
+    /**
+     * Runs the SQL query which finds every method of every package in the database.
+     * @param context
+     * @return
+     */
     public static @NotNull
     Result<Record3<Object, Object, Object>> findMethods(DSLContext context) {
         return context.select(DSL.field("fasten_uri"), DSL.field("package_id"), DSL.field("version"))
