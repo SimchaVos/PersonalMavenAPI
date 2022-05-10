@@ -1,9 +1,11 @@
+import eu.f4sten.mavencrawler.utils.FileReader;
 import eu.fasten.core.data.metadatadb.codegen.enums.Access;
 import eu.fasten.core.dbconnectors.PostgresConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 
@@ -19,6 +21,7 @@ public class Main {
     }
 
     public static void main(String[] args) throws Exception {
+        long start = System.nanoTime();
         DSLContext context = getDbContext();
         Result<Record3<Object, Object, Object>> results = AnalysisHandler.findMethods(context);
         //Ideally sort results based on column fasten_uri
@@ -30,14 +33,15 @@ public class Main {
 
         for (Map<String, PriorityQueue<PackageMethod>> methods : packageIdMap.values()) {
             for (PriorityQueue<PackageMethod> versions : methods.values()) {
-                Long packageId = versions.peek().packageId;
-                VersionM introduced = versions.peek().version;
+                PackageMethod oldest = versions.peek();
+                Long packageId = oldest.packageId;
+                VersionM introduced = oldest.version;
 
                 Set<VersionM> higherVersions = new HashSet<>();
 
                 // Identify all versions that have been released, which have a version number higher than the number at
                 // which the method was introduced. Note that major releases don't count.
-                for (VersionM version : versionsPerPackageId.get(versions.peek().packageId)) {
+                for (VersionM version : versionsPerPackageId.get(oldest.packageId)) {
                     if (version.major != introduced.major) break;
                     if (version.numberOfDigits > 1) {
                         if (version.minor > introduced.minor) {
@@ -67,6 +71,7 @@ public class Main {
 
         }
         System.out.println(incursions);
+        System.out.println("Execution time: " + (System.nanoTime() - start) / 1000000 + "ms");
     }
 
 }

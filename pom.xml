@@ -50,5 +50,10 @@
             <version>RELEASE</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>eu.fasten-project</groupId>
+            <artifactId>maven-crawler</artifactId>
+            <version>0.0.8-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 </project>
