@@ -20,6 +20,31 @@ public class Main {
         return PostgresConnector.getDSLContext("jdbc:postgresql://localhost:5432/fasten_java", "fasten", false);
     }
 
+    public static class Major {
+        Long packageId;
+        int majorVersion;
+
+        public Major(Long packageId, int majorVersion) {
+            this.packageId = packageId;
+            this.majorVersion = majorVersion;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return this.packageId.equals(((Major) o).packageId) && this.majorVersion == ((Major) o).majorVersion;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(packageId, majorVersion);
+        }
+
+        @Override
+        public String toString() {
+            return this.packageId + "v" + this.majorVersion;
+        }
+    }
+
     public static void main(String[] args) throws Exception {
         long start = System.nanoTime();
         DSLContext context = getDbContext();
@@ -29,7 +54,7 @@ public class Main {
         Map<Long, Map<String, PriorityQueue<PackageMethod>>> packageIdMap = AnalysisHandler.createPackageIdMap(results);
         Map<Long, Set<VersionM>> versionsPerPackageId = AnalysisHandler.getAllVersions(packageIdMap);
 
-        Map<Long, Integer> incursions = new HashMap<>();
+        Map<Major, Integer> incursions = new HashMap<>();
 
         for (Map<String, PriorityQueue<PackageMethod>> methods : packageIdMap.values()) {
             for (PriorityQueue<PackageMethod> versions : methods.values()) {
@@ -59,13 +84,13 @@ public class Main {
                     VersionM curr = versions.poll().version;
                     higherVersions.removeIf(curr::equals);
                 }
-                incursions.putIfAbsent(packageId, 0);
+                incursions.putIfAbsent(new Major(packageId, introduced.major), 0);
 
                 // Now we calculate all the incursions. Each time there are higherVersions which do not have a corresponding
                 // method record, we increment the incursions of the package.
                 if (!higherVersions.isEmpty()) {
                     Integer curr = incursions.get(packageId);
-                    incursions.put(packageId, curr + 1);
+                    incursions.put(new Major(packageId, introduced.major), curr + 1);
                 }
             }
 
