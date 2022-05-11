@@ -10,62 +10,41 @@ import java.util.*;
 public class CoordsProcessor {
 
     public static void main(String[] args) throws Exception {
+        long time1 = System.nanoTime() / 1000000;
+
         String testResourcesPath = "C:\\Users\\simch\\Documents\\fasten-docker-deployment-develop\\test-resources\\";
-        List<MavenGA> input = readCoordsFile(testResourcesPath + "mvn.coords.txt");
+        List<MavenId> input = readCoordsFile(testResourcesPath + "mvn.coords.quality-analyzer.txt");
 
         FileReader fr = new FileReader();
         Set<MavenId> mavenIds = fr.readIndexFile(new File(testResourcesPath + "nexus-maven-repository-index.gz"));
+        long time2 = System.nanoTime() / 1000000;
         System.out.println("Done reading the Maven Index.");
-        Map<MavenGA, Set<String>> map = convertToMap(mavenIds);
-        System.out.println("Done converting to map.");
-        List<MavenId> expandedMavenIds = extractAllVersions(input, map);
+        List<MavenId> expandedMavenIds = extractAllVersions(input, mavenIds);
+        long time3 = System.nanoTime() / 1000000;
         System.out.println("Done extracting all versions.");
 
         writeCoordsFile(testResourcesPath, expandedMavenIds);
+        long time4 = System.nanoTime() / 1000000;
+
+        System.out.println("Reading file: " + (time2 - time1) + "ms");
+        System.out.println("Extracting versions: " + (time3 - time2) + "ms");
+        System.out.println("Writing file: " + (time4 - time3) + "ms");
+        System.out.println("Total entries in Maven Index read: " + mavenIds.size());
+
+
     }
 
-    public static class MavenGA {
-        String groupId;
-        String artifactId;
-
-        public MavenGA(String groupId, String artifactId) {
-            this.groupId = groupId;
-            this.artifactId = artifactId;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            return this.groupId.equals(((MavenGA) o).groupId) && this.artifactId.equals(((MavenGA) o).artifactId);
-        }
-
-        @Override
-        public int hashCode() {
-            return groupId.hashCode() + artifactId.hashCode();
-        }
-    }
-
-    public static Map<MavenGA, Set<String>> convertToMap(Set<MavenId> mavenIds) {
-        Map<MavenGA, Set<String>> map = new HashMap<>();
-
-        for (MavenId mavenId : mavenIds) {
-            MavenGA curr = new MavenGA(mavenId.groupId, mavenId.artifactId);
-            map.putIfAbsent(curr, new HashSet<>());
-            map.get(curr).add(mavenId.version);
-        }
-        return map;
-    }
-
-    public static List<MavenId> extractAllVersions(List<MavenGA> inputIds, Map<MavenGA, Set<String>> maven) {
+    public static List<MavenId> extractAllVersions(List<MavenId> inputIds, Set<MavenId> maven) {
         List<MavenId> result = new ArrayList<>();
 
-        for (MavenGA currInput : inputIds) {
-            if (maven.containsKey(currInput)) {
-                for (String version : maven.get(currInput)) {
-                    MavenId toBeAdded = new MavenId();
-                    toBeAdded.groupId = currInput.groupId;
-                    toBeAdded.artifactId = currInput.artifactId;
-                    toBeAdded.version = version;
-                    result.add(toBeAdded);
+        for (MavenId currInput : inputIds) {
+            for (MavenId mavenId : maven) {
+                if (currInput.groupId.equals(mavenId.groupId) && currInput.artifactId.equals(mavenId.artifactId)) {
+                    MavenId toAdd = new MavenId();
+                    toAdd.groupId = mavenId.groupId;
+                    toAdd.artifactId = mavenId.artifactId;
+                    toAdd.version = mavenId.version;
+                    result.add(toAdd);
                 }
             }
         }
@@ -82,13 +61,15 @@ public class CoordsProcessor {
         fw.close();
     }
 
-    public static List<MavenGA> readCoordsFile(String path) throws FileNotFoundException {
+    public static List<MavenId> readCoordsFile(String path) throws FileNotFoundException {
         Scanner sc = new Scanner(new File(path));
         sc.useDelimiter(":");
-        List<MavenGA> coords = new ArrayList<>();
+        List<MavenId> coords = new ArrayList<>();
 
         while (sc.hasNext()) {
-            MavenGA newPackage = new MavenGA(sc.next().replaceAll("^[\n\r]", ""), sc.next());
+            MavenId newPackage = new MavenId();
+            newPackage.groupId = sc.next().replaceAll("^[\n\r]", "");
+            newPackage.artifactId = sc.next();
             coords.add(newPackage);
             sc.useDelimiter("\n");
             sc.next();

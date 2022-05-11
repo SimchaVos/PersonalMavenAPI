@@ -89,7 +89,7 @@ public class Main {
                 // Now we calculate all the incursions. Each time there are higherVersions which do not have a corresponding
                 // method record, we increment the incursions of the package.
                 if (!higherVersions.isEmpty()) {
-                    Integer curr = incursions.get(packageId);
+                    Integer curr = incursions.get(new Major(packageId, introduced.major));
                     incursions.put(new Major(packageId, introduced.major), curr + 1);
                 }
             }
