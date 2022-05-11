@@ -5,6 +5,11 @@ class Method implements Comparable<Method> {
     String method;
     Long packageId;
 
+    @Override
+    public String toString() {
+        return this.packageId + ":" + this.method + "@v" + this.version;
+    }
+
     public Method(String version, String method, Long packageId) {
         int[] splitVersion = Arrays.stream(version.split("\\.")).mapToInt(Integer::parseInt).toArray();
 

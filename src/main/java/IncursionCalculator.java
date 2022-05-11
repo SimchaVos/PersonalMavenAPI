@@ -51,6 +51,7 @@ public class IncursionCalculator {
         Map<Long, Set<VersionM>> versionsPerPackageId = AnalysisHandler.getAllVersions(packageIdMap);
 
         Map<Major, Integer> incursions = new HashMap<>();
+        Map<Method, Set<VersionM>> breakingMethods = new HashMap<>();
 
         for (Map<String, PriorityQueue<Method>> methods : packageIdMap.values()) {
             for (PriorityQueue<Method> versions : methods.values()) {
@@ -87,11 +88,13 @@ public class IncursionCalculator {
                 if (!higherVersions.isEmpty()) {
                     Integer curr = incursions.get(new Major(packageId, introduced.major));
                     incursions.put(new Major(packageId, introduced.major), curr + 1);
+                    breakingMethods.put(oldest, higherVersions);
                 }
             }
 
         }
         System.out.println(incursions);
+        System.out.println(breakingMethods);
         System.out.println("Execution time: " + (System.nanoTime() - start) / 1000000 + "ms");
 
         writeIncursionsToFile("C:\\Users\\simch\\Documents\\fasten-docker-deployment-develop\\test-resources\\",
