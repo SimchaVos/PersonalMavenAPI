@@ -1,11 +1,11 @@
 import java.util.Arrays;
 
-class PackageMethod implements Comparable<PackageMethod> {
+class Method implements Comparable<Method> {
     VersionM version;
     String method;
     Long packageId;
 
-    public PackageMethod(String version, String method, Long packageId) {
+    public Method(String version, String method, Long packageId) {
         int[] splitVersion = Arrays.stream(version.split("\\.")).mapToInt(Integer::parseInt).toArray();
 
         int major = splitVersion[0];
@@ -24,7 +24,7 @@ class PackageMethod implements Comparable<PackageMethod> {
      * @return
      */
     @Override
-    public int compareTo(PackageMethod o) {
+    public int compareTo(Method o) {
         return this.version.compareTo(o.version);
     }
 }

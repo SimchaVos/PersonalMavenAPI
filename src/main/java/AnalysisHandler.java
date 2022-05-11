@@ -15,8 +15,8 @@ public class AnalysisHandler {
      * @param results
      * @return
      */
-    public static Map<Long, Map<String, PriorityQueue<PackageMethod>>> createPackageIdMap(Result<Record3<Object, Object, Object>> results) {
-        Map<Long, Map<String, PriorityQueue<PackageMethod>>> packageIdMap = new HashMap<>();
+    public static Map<Long, Map<String, PriorityQueue<Method>>> createPackageIdMap(Result<Record3<Object, Object, Object>> results) {
+        Map<Long, Map<String, PriorityQueue<Method>>> packageIdMap = new HashMap<>();
 
         //           Method, PackageID, Version
         for (Record3<Object, Object, Object> record : results) {
@@ -25,7 +25,7 @@ public class AnalysisHandler {
             String version = (String) record.value3();
             packageIdMap.computeIfAbsent(packageId, k -> new HashMap<>());
             packageIdMap.get(packageId).computeIfAbsent(method, k -> new PriorityQueue<>());//(Collections.reverseOrder()));
-            packageIdMap.get(packageId).get(method).add(new PackageMethod(version, method, packageId));
+            packageIdMap.get(packageId).get(method).add(new Method(version, method, packageId));
         }
 
         return packageIdMap;
@@ -36,12 +36,12 @@ public class AnalysisHandler {
      * @param packageIdMap
      * @return
      */
-    public static Map<Long, Set<VersionM>> getAllVersions(Map<Long, Map<String, PriorityQueue<PackageMethod>>> packageIdMap) {
+    public static Map<Long, Set<VersionM>> getAllVersions(Map<Long, Map<String, PriorityQueue<Method>>> packageIdMap) {
         Map<Long, Set<VersionM>> versionsPerPackageId = new HashMap<>();
 
-        for (Map<String, PriorityQueue<PackageMethod>> methods : packageIdMap.values()) {
-            for (PriorityQueue<PackageMethod> versions : methods.values()) {
-                for (PackageMethod version : versions) {
+        for (Map<String, PriorityQueue<Method>> methods : packageIdMap.values()) {
+            for (PriorityQueue<Method> versions : methods.values()) {
+                for (Method version : versions) {
                     versionsPerPackageId.computeIfAbsent(version.packageId, k -> new HashSet<>());
                     versionsPerPackageId.get(version.packageId).add(version.version);
                 }

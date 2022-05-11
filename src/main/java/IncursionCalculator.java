@@ -47,14 +47,14 @@ public class IncursionCalculator {
         Result<Record3<Object, Object, Object>> results = AnalysisHandler.findMethods(context);
         //Ideally sort results based on column fasten_uri
 
-        Map<Long, Map<String, PriorityQueue<PackageMethod>>> packageIdMap = AnalysisHandler.createPackageIdMap(results);
+        Map<Long, Map<String, PriorityQueue<Method>>> packageIdMap = AnalysisHandler.createPackageIdMap(results);
         Map<Long, Set<VersionM>> versionsPerPackageId = AnalysisHandler.getAllVersions(packageIdMap);
 
         Map<Major, Integer> incursions = new HashMap<>();
 
-        for (Map<String, PriorityQueue<PackageMethod>> methods : packageIdMap.values()) {
-            for (PriorityQueue<PackageMethod> versions : methods.values()) {
-                PackageMethod oldest = versions.peek();
+        for (Map<String, PriorityQueue<Method>> methods : packageIdMap.values()) {
+            for (PriorityQueue<Method> versions : methods.values()) {
+                Method oldest = versions.peek();
                 Long packageId = oldest.packageId;
                 VersionM introduced = oldest.version;
 
