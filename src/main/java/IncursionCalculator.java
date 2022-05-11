@@ -1,15 +1,9 @@
-import eu.f4sten.mavencrawler.utils.FileReader;
-import eu.fasten.core.data.metadatadb.codegen.enums.Access;
 import eu.fasten.core.dbconnectors.PostgresConnector;
-import org.jetbrains.annotations.NotNull;
 import org.jooq.*;
-import org.jooq.impl.DSL;
 
-import java.time.LocalDateTime;
 import java.util.*;
 
-
-public class Main {
+public class IncursionCalculator {
     /**
      * Gets DSLContext, requires *FASTENDB_PASS* environment variable in run configuration.
      *
