@@ -6,23 +6,18 @@ class Method implements Comparable<Method> {
     DefaultArtifactVersion version;
     String method;
     Long packageId;
+    String packageName;
 
     @Override
     public String toString() {
         return this.packageId + ":" + this.method + "@v" + this.version;
     }
 
-    public Method(String version, String method, Long packageId) {
-        int[] splitVersion = Arrays.stream(version.split("\\.")).mapToInt(Integer::parseInt).toArray();
-
-        int major = splitVersion[0];
-        int minor = splitVersion.length > 1 ? splitVersion[1] : -1;
-        int patch = splitVersion.length > 2 ? splitVersion[2] : -1;
-
-        this.version = new VersionM(major, minor, patch, splitVersion.length);
-
+    public Method(String version, String method, Long packageId, String packageName) {
+        this.version = new DefaultArtifactVersion(version);
         this.method = method;
         this.packageId = packageId;
+        this.packageName = packageName;
     }
 
     /**

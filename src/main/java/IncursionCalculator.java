@@ -1,4 +1,5 @@
 import eu.fasten.core.dbconnectors.PostgresConnector;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jooq.*;
 
 import java.io.FileWriter;
@@ -19,10 +20,19 @@ public class IncursionCalculator {
     public static class Major {
         Long packageId;
         int majorVersion;
+        int numberOfMethods;
+        String packageName;
 
         public Major(Long packageId, int majorVersion) {
             this.packageId = packageId;
             this.majorVersion = majorVersion;
+        }
+
+        public Major(Long packageId, int majorVersion, int numberOfMethods, String packageName) {
+            this.packageId = packageId;
+            this.majorVersion = majorVersion;
+            this.numberOfMethods = numberOfMethods;
+            this.packageName = packageName;
         }
 
         @Override
@@ -37,14 +47,14 @@ public class IncursionCalculator {
 
         @Override
         public String toString() {
-            return this.packageId + "v" + this.majorVersion;
+            return this.packageName + "v" + this.majorVersion;
         }
     }
 
     public static void main(String[] args) throws Exception {
         long start = System.nanoTime();
         DSLContext context = getDbContext();
-        Result<Record3<Object, Object, Object>> results = AnalysisHandler.findMethods(context);
+        Result<Record4<Object, Object, Object, Object>> results = AnalysisHandler.findMethods(context);
         //Ideally sort results based on column fasten_uri
 
         Map<Long, Map<String, PriorityQueue<Method>>> packageIdMap = AnalysisHandler.createPackageIdMap(results);
@@ -75,7 +85,8 @@ public class IncursionCalculator {
                     DefaultArtifactVersion curr = versions.poll().version;
                     higherVersions.removeIf(curr::equals);
                 }
-                incursions.putIfAbsent(new Major(packageId, introduced.major), 0);
+                incursions.putIfAbsent(new Major(packageId, introduced.getMajorVersion(),
+                        methodsPerVersion.get(packageId).get(introduced), oldest.packageName), 0);
 
                 // Now we calculate all the incursions. Each time there are higherVersions which do not have a corresponding
                 // method record, we increment the incursions of the package.

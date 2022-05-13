@@ -3,6 +3,7 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.DSLContext;
 import org.jooq.Record3;
+import org.jooq.Record4;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
 
@@ -16,17 +17,17 @@ public class AnalysisHandler {
      * @param results
      * @return
      */
-    public static Map<Long, Map<String, PriorityQueue<Method>>> createPackageIdMap(Result<Record3<Object, Object, Object>> results) {
+    public static Map<Long, Map<String, PriorityQueue<Method>>> createPackageIdMap(Result<Record4<Object, Object, Object, Object>> results) {
         Map<Long, Map<String, PriorityQueue<Method>>> packageIdMap = new HashMap<>();
 
         //           Method, PackageID, Version
-        for (Record3<Object, Object, Object> record : results) {
+        for (Record4<Object, Object, Object, Object> record : results) {
             String method = (String) record.value1();
             Long packageId = (Long) record.value2();
             String version = (String) record.value3();
             packageIdMap.computeIfAbsent(packageId, k -> new HashMap<>());
             packageIdMap.get(packageId).computeIfAbsent(method, k -> new PriorityQueue<>());//(Collections.reverseOrder()));
-            packageIdMap.get(packageId).get(method).add(new Method(version, method, packageId));
+            packageIdMap.get(packageId).get(method).add(new Method(version, method, packageId, (String) record.value4()));
         }
 
         return packageIdMap;
