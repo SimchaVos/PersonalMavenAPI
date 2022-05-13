@@ -6,6 +6,7 @@ import org.jooq.*;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class IncursionCalculator {
@@ -113,12 +114,12 @@ public class IncursionCalculator {
         System.out.println(incursions);
         System.out.println("Execution time: " + (System.nanoTime() - start) / 1000000 + "ms");
 
-        writeIncursionsToFile("C:\\Users\\simch\\Documents\\1fasten-docker-deployment-develop\\test-resources\\",
+        writeIncursionsToFile(Paths.get("").toAbsolutePath().getParent().resolve("fasten-docker-deployment\\test-resources\\").toString(),
                 incursions);
     }
 
     public static void writeIncursionsToFile(String path, Map<Major, Incursion> incursions) throws IOException {
-        FileWriter fw = new FileWriter(path + "incursions");
+        FileWriter fw = new FileWriter(path + "/incursions");
         for (Major major : incursions.keySet()) {
             fw.write(major + ": " + incursions.get(major).incursions + "/" + major.numberOfMethods + ",\n");
         }

@@ -7,33 +7,24 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class CoordsProcessor {
 
     public static void main(String[] args) throws Exception {
-        long time1 = System.nanoTime() / 1000000;
-
-        String testResourcesPath = "C:\\Users\\simch\\Documents\\1fasten-docker-deployment-develop\\test-resources\\";
-        List<MavenId> input = readCoordsFile(testResourcesPath + "mvn.coords.txt");
-
+        String testResourcesPath = Paths.get("").toAbsolutePath().getParent().resolve("fasten-docker-deployment\\test-resources\\").toString();
+        List<MavenId> input = readCoordsFile(testResourcesPath + "/mvn.coords.txt");
         FileReader fr = new FileReader();
-        Set<MavenId> mavenIds = fr.readIndexFile(new File(testResourcesPath + "nexus-maven-repository-index.gz"));
-        long time2 = System.nanoTime() / 1000000;
+        Set<MavenId> mavenIds = fr.readIndexFile(new File(testResourcesPath + "/nexus-maven-repository-index.gz"));
+
         System.out.println("Done reading the Maven Index.");
         List<MavenId> expandedMavenIds = extractAllVersions(input, mavenIds);
-        long time3 = System.nanoTime() / 1000000;
-        System.out.println("Done extracting all versions.");
 
         writeCoordsFile(testResourcesPath, expandedMavenIds);
-        long time4 = System.nanoTime() / 1000000;
 
-        System.out.println("Reading file: " + (time2 - time1) + "ms");
-        System.out.println("Extracting versions: " + (time3 - time2) + "ms");
-        System.out.println("Writing file: " + (time4 - time3) + "ms");
         System.out.println("Total entries in Maven Index read: " + mavenIds.size());
-
-
     }
 
     public static List<MavenId> extractAllVersions(List<MavenId> inputIds, Set<MavenId> maven) {
