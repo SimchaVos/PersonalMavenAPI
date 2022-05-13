@@ -1,3 +1,5 @@
+package coordinates;
+
 import eu.f4sten.mavencrawler.utils.FileReader;
 import eu.f4sten.pomanalyzer.data.MavenId;
 

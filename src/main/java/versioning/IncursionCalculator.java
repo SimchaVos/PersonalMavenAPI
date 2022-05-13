@@ -1,3 +1,5 @@
+package versioning;
+
 import eu.fasten.core.dbconnectors.PostgresConnector;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jooq.*;

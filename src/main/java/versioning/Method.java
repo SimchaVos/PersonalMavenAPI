@@ -1,3 +1,5 @@
+package versioning;
+
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import java.util.Arrays;
