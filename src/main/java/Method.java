@@ -1,7 +1,9 @@
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+
 import java.util.Arrays;
 
 class Method implements Comparable<Method> {
-    VersionM version;
+    DefaultArtifactVersion version;
     String method;
     Long packageId;
 

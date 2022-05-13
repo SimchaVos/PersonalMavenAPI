@@ -48,37 +48,31 @@ public class IncursionCalculator {
         //Ideally sort results based on column fasten_uri
 
         Map<Long, Map<String, PriorityQueue<Method>>> packageIdMap = AnalysisHandler.createPackageIdMap(results);
-        Map<Long, Set<VersionM>> versionsPerPackageId = AnalysisHandler.getAllVersions(packageIdMap);
+        Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId = AnalysisHandler.getAllVersions(packageIdMap);
+        Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion = AnalysisHandler.getMethodsPerVersion(results);
 
         Map<Major, Integer> incursions = new HashMap<>();
-        Map<Method, Set<VersionM>> breakingMethods = new HashMap<>();
+        Map<Method, Set<DefaultArtifactVersion>> breakingMethods = new HashMap<>();
 
         for (Map<String, PriorityQueue<Method>> methods : packageIdMap.values()) {
             for (PriorityQueue<Method> versions : methods.values()) {
                 Method oldest = versions.peek();
                 Long packageId = oldest.packageId;
-                VersionM introduced = oldest.version;
+                DefaultArtifactVersion introduced = oldest.version;
 
-                Set<VersionM> higherVersions = new HashSet<>();
+                Set<DefaultArtifactVersion> higherVersions = new HashSet<>();
 
                 // Identify all versions that have been released, which have a version number higher than the number at
                 // which the method was introduced. Note that major releases don't count.
-                for (VersionM version : versionsPerPackageId.get(oldest.packageId)) {
-                    if (version.major != introduced.major) break;
-                    if (version.numberOfDigits > 1) {
-                        if (version.minor > introduced.minor) {
-                            higherVersions.add(version);
-                            break;
-                        }
-                        if (version.minor == introduced.minor && version.numberOfDigits > 2 && version.patch > introduced.patch) {
-                            higherVersions.add(version);
-                        }
+                for (DefaultArtifactVersion version : versionsPerPackageId.get(oldest.packageId)) {
+                    if (version.getMajorVersion() == introduced.getMajorVersion() && version.compareTo(introduced) > 0) {
+                        higherVersions.add(version);
                     }
                 }
                 // Every version in higherVersions should have a corresponding method record in the database (versions
                 // priority queue).
                 while (!versions.isEmpty()) {
-                    VersionM curr = versions.poll().version;
+                    DefaultArtifactVersion curr = versions.poll().version;
                     higherVersions.removeIf(curr::equals);
                 }
                 incursions.putIfAbsent(new Major(packageId, introduced.major), 0);
@@ -86,8 +80,8 @@ public class IncursionCalculator {
                 // Now we calculate all the incursions. Each time there are higherVersions which do not have a corresponding
                 // method record, we increment the incursions of the package.
                 if (!higherVersions.isEmpty()) {
-                    Integer curr = incursions.get(new Major(packageId, introduced.major));
-                    incursions.put(new Major(packageId, introduced.major), curr + 1);
+                    Integer curr = incursions.get(new Major(packageId, introduced.getMajorVersion()));
+                    incursions.put(new Major(packageId, introduced.getMajorVersion()), curr + 1);
                     breakingMethods.put(oldest, higherVersions);
                 }
             }
@@ -97,16 +91,17 @@ public class IncursionCalculator {
         System.out.println(breakingMethods);
         System.out.println("Execution time: " + (System.nanoTime() - start) / 1000000 + "ms");
 
-        writeIncursionsToFile("C:\\Users\\simch\\Documents\\fasten-docker-deployment-develop\\test-resources\\",
+        writeIncursionsToFile("C:\\Users\\simch\\Documents\\1fasten-docker-deployment-develop\\test-resources\\",
                 incursions);
     }
 
     public static void writeIncursionsToFile(String path, Map<Major, Integer> incursions) throws IOException {
         FileWriter fw = new FileWriter(path + "incursions");
         for (Major major : incursions.keySet()) {
-            fw.write(major + "|" + incursions.get(major) + ",");
+            fw.write(major + "," + incursions.get(major) + "/" + major.numberOfMethods + ",\n");
         }
         fw.close();
     }
+    // also store signature of method incursing and name of package
 
 }
