@@ -54,7 +54,7 @@ public class IncursionCalculator {
     public static void main(String[] args) throws Exception {
         long start = System.nanoTime();
         DSLContext context = getDbContext();
-        Result<Record4<Object, Object, Object, Object>> results = AnalysisHandler.findMethods(context);
+        Result<Record4<String, Long, String, String>> results = AnalysisHandler.findMethods(context);
         //Ideally sort results based on column fasten_uri
 
         Map<Long, Map<String, PriorityQueue<Method>>> packageIdMap = AnalysisHandler.createPackageIdMap(results);
