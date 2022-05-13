@@ -12,8 +12,8 @@ public class CoordsProcessor {
     public static void main(String[] args) throws Exception {
         long time1 = System.nanoTime() / 1000000;
 
-        String testResourcesPath = "C:\\Users\\simch\\Documents\\fasten-docker-deployment-develop\\test-resources\\";
-        List<MavenId> input = readCoordsFile(testResourcesPath + "mvn.coords.quality-analyzer.txt");
+        String testResourcesPath = "C:\\Users\\simch\\Documents\\1fasten-docker-deployment-develop\\test-resources\\";
+        List<MavenId> input = readCoordsFile(testResourcesPath + "mvn.coords.txt");
 
         FileReader fr = new FileReader();
         Set<MavenId> mavenIds = fr.readIndexFile(new File(testResourcesPath + "nexus-maven-repository-index.gz"));

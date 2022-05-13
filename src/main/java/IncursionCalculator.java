@@ -23,11 +23,6 @@ public class IncursionCalculator {
         int numberOfMethods;
         String packageName;
 
-        public Major(Long packageId, int majorVersion) {
-            this.packageId = packageId;
-            this.majorVersion = majorVersion;
-        }
-
         public Major(Long packageId, int majorVersion, int numberOfMethods, String packageName) {
             this.packageId = packageId;
             this.majorVersion = majorVersion;
@@ -51,6 +46,21 @@ public class IncursionCalculator {
         }
     }
 
+    public static class Incursion {
+        int incursions;
+        Set<Method> incursing;
+
+        public Incursion() {
+            this.incursions = 0;
+            this.incursing = new HashSet<>();
+        }
+
+        @Override
+        public String toString() {
+            return "{ " + this.incursions + " incursions in " + this.incursing;
+        }
+    }
+
     public static void main(String[] args) throws Exception {
         long start = System.nanoTime();
         DSLContext context = getDbContext();
@@ -61,8 +71,7 @@ public class IncursionCalculator {
         Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId = AnalysisHandler.getAllVersions(packageIdMap);
         Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion = AnalysisHandler.getMethodsPerVersion(results);
 
-        Map<Major, Integer> incursions = new HashMap<>();
-        Map<Method, Set<DefaultArtifactVersion>> breakingMethods = new HashMap<>();
+        Map<Major, Incursion> incursions = new HashMap<>();
 
         for (Map<String, PriorityQueue<Method>> methods : packageIdMap.values()) {
             for (PriorityQueue<Method> versions : methods.values()) {
@@ -85,31 +94,31 @@ public class IncursionCalculator {
                     DefaultArtifactVersion curr = versions.poll().version;
                     higherVersions.removeIf(curr::equals);
                 }
-                incursions.putIfAbsent(new Major(packageId, introduced.getMajorVersion(),
-                        methodsPerVersion.get(packageId).get(introduced), oldest.packageName), 0);
+                Major major = new Major(packageId, introduced.getMajorVersion(),
+                        methodsPerVersion.get(packageId).get(introduced), oldest.packageName);
+                incursions.putIfAbsent(major, new Incursion());
 
                 // Now we calculate all the incursions. Each time there are higherVersions which do not have a corresponding
                 // method record, we increment the incursions of the package.
                 if (!higherVersions.isEmpty()) {
-                    Integer curr = incursions.get(new Major(packageId, introduced.getMajorVersion()));
-                    incursions.put(new Major(packageId, introduced.getMajorVersion()), curr + 1);
-                    breakingMethods.put(oldest, higherVersions);
+                    Incursion incursion = incursions.get(major);
+                    incursion.incursing.add(oldest);
+                    incursion.incursions++;
                 }
             }
 
         }
         System.out.println(incursions);
-        System.out.println(breakingMethods);
         System.out.println("Execution time: " + (System.nanoTime() - start) / 1000000 + "ms");
 
         writeIncursionsToFile("C:\\Users\\simch\\Documents\\1fasten-docker-deployment-develop\\test-resources\\",
                 incursions);
     }
 
-    public static void writeIncursionsToFile(String path, Map<Major, Integer> incursions) throws IOException {
+    public static void writeIncursionsToFile(String path, Map<Major, Incursion> incursions) throws IOException {
         FileWriter fw = new FileWriter(path + "incursions");
         for (Major major : incursions.keySet()) {
-            fw.write(major + "," + incursions.get(major) + "/" + major.numberOfMethods + ",\n");
+            fw.write(major + ": " + incursions.get(major).incursions + "," + incursions.get(major) + "/" + major.numberOfMethods + ",\n");
         }
         fw.close();
     }
