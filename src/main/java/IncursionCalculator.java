@@ -42,7 +42,7 @@ public class IncursionCalculator {
 
         @Override
         public String toString() {
-            return this.packageName + "v" + this.majorVersion;
+            return this.packageName + ":" + this.majorVersion;
         }
     }
 
@@ -118,10 +118,8 @@ public class IncursionCalculator {
     public static void writeIncursionsToFile(String path, Map<Major, Incursion> incursions) throws IOException {
         FileWriter fw = new FileWriter(path + "incursions");
         for (Major major : incursions.keySet()) {
-            fw.write(major + ": " + incursions.get(major).incursions + "," + incursions.get(major) + "/" + major.numberOfMethods + ",\n");
+            fw.write(major + ": " + incursions.get(major).incursions + "/" + major.numberOfMethods + ",\n");
         }
         fw.close();
     }
-    // also store signature of method incursing and name of package
-
 }
