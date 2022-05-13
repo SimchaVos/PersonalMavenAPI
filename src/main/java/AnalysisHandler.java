@@ -67,7 +67,10 @@ public class AnalysisHandler {
                 .join("modules").on(DSL.field("module_id").eq(DSL.field("modules.id")))
                 .join("package_versions").on(DSL.field("package_version_id").eq(DSL.field("package_versions.id")))
                 .join("packages").on(DSL.field("package_versions.package_id").eq(DSL.field("packages.id")))
-                .where(DSL.field("callables.access").eq(Access.public_)).and(DSL.field("defined").eq(true))
+                .where(DSL.field("callables.access").eq(Access.public_))
+                .and(DSL.field("defined").eq(true))
+                .and(DSL.field("callables.is_internal_call").eq(true))
+                .and(DSL.field("callables.fasten_uri").notLike("%$Lambda.%"))
                 .fetch();
     }
 
