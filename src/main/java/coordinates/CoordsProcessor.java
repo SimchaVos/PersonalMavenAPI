@@ -2,6 +2,7 @@ package coordinates;
 
 import eu.f4sten.mavencrawler.utils.FileReader;
 import eu.f4sten.pomanalyzer.data.MavenId;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -10,6 +11,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CoordsProcessor {
 
@@ -32,7 +35,9 @@ public class CoordsProcessor {
 
         for (MavenId currInput : inputIds) {
             for (MavenId mavenId : maven) {
-                if (currInput.groupId.equals(mavenId.groupId) && currInput.artifactId.equals(mavenId.artifactId)) {
+                DefaultArtifactVersion inp_v = new DefaultArtifactVersion(currInput.version);
+                DefaultArtifactVersion mav_v = new DefaultArtifactVersion(mavenId.version);
+                if (currInput.groupId.equals(mavenId.groupId) && currInput.artifactId.equals(mavenId.artifactId) && (inp_v.compareTo(mav_v) <= 0)) {
                     MavenId toAdd = new MavenId();
                     toAdd.groupId = mavenId.groupId;
                     toAdd.artifactId = mavenId.artifactId;
@@ -45,7 +50,7 @@ public class CoordsProcessor {
     }
 
     public static void writeCoordsFile(String path, List<MavenId> mavenIds) throws IOException {
-        FileWriter fw = new FileWriter(path + "mvn.expanded_coords.txt");
+        FileWriter fw = new FileWriter(path + "/mvn.expanded_coords.txt");
         for (MavenId mavenId : mavenIds) {
             fw.write(mavenId.groupId + "." + mavenId.artifactId + ":" + mavenId.version + "|{\"groupId\":\""
                     + mavenId.groupId + "\",\"artifactId\":\"" + mavenId.artifactId + "\",\"version\":\""
@@ -61,12 +66,13 @@ public class CoordsProcessor {
 
         while (sc.hasNext()) {
             MavenId newPackage = new MavenId();
-            newPackage.groupId = sc.next().replaceAll("^[\n\r]", "");
-            newPackage.artifactId = sc.next();
+            String[] split = sc.nextLine().split(":");
+
+            newPackage.groupId = split[0];
+            newPackage.artifactId = split[1];
+            newPackage.version = split[2].substring(0, split[2].indexOf("|"));
+
             coords.add(newPackage);
-            sc.useDelimiter("\n");
-            sc.next();
-            sc.useDelimiter(":");
         }
         sc.close();
         return coords;

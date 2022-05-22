@@ -1,2 +1,0 @@
-CALLABLE-INDEX-URL=/path/fasten-docker-deployment/docker-volumes/fasten/java/callable-index
-FASTEN-POSTGRES-URL=jdbc:postgresql://localhost:5432/fasten_java
