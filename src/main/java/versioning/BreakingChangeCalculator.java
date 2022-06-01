@@ -19,7 +19,8 @@ public class BreakingChangeCalculator {
      * @throws Exception if it can not connect.
      */
     private static DSLContext getDbContext() throws Exception {
-        return PostgresConnector.getDSLContext("jdbc:postgresql://monster.ewi.tudelft.nl:5432/fasten_java", "simch", false);
+        return PostgresConnector.getDSLContext("jdbc:postgresql://localhost:5432/fasten_java",
+            "fasten", false);
     }
 
     public static class Major {
@@ -70,7 +71,7 @@ public class BreakingChangeCalculator {
         long start = System.nanoTime();
         DSLContext context = getDbContext();
 
-        List<MavenId> coords = CoordsProcessor.getExpandedCoords();
+        List<MavenId> coords = CoordsProcessor.readCoordsFile("/Users/mehdi/Desktop/MyMac/TUD/FASTEN/Repositories/OtherRepos/PersonalMavenAPI/src/mvn.expanded_coords.txt");
         Set<Result<Record4<String, Long, String, String>>> results = AnalysisHandler.findMethods(context, coords);
 
         Map<Long, Map<String, PriorityQueue<Method>>> packageIdMap = AnalysisHandler.createPackageIdMap(results);
@@ -122,7 +123,7 @@ public class BreakingChangeCalculator {
     }
 
     public static void writeIncursionsToFile(String path, Map<Major, Incursion> incursions) throws IOException {
-        FileWriter fw = new FileWriter(path + "/incursions");
+        FileWriter fw = new FileWriter(Paths.get("").toAbsolutePath()+ "/incursions");
         for (Major major : incursions.keySet()) {
             fw.write(major + ":" + incursions.get(major).incursions + "/" + major.numberOfMethods + ":" + incursions.get(major).incursing + "\n");
         }
