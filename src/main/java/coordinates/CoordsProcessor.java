@@ -8,26 +8,25 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class CoordsProcessor {
-
     public static void main(String[] args) throws Exception {
+        writeCoordsFile(Paths.get("").toAbsolutePath().getParent().resolve("fasten-docker-deployment\\test-resources\\").toString(), getExpandedCoords());
+    }
+
+    public static List<MavenId> getExpandedCoords() throws Exception {
         String testResourcesPath = Paths.get("").toAbsolutePath().getParent().resolve("fasten-docker-deployment\\test-resources\\").toString();
-        List<MavenId> input = readCoordsFile(testResourcesPath + "/mvn.coords.txt");
+        List<MavenId> input = readCoordsFile(testResourcesPath + "/artifacts.txt");
         FileReader fr = new FileReader();
         Set<MavenId> mavenIds = fr.readIndexFile(new File(testResourcesPath + "/nexus-maven-repository-index.gz"));
 
         System.out.println("Done reading the Maven Index.");
         List<MavenId> expandedMavenIds = extractAllVersions(input, mavenIds);
-
-        writeCoordsFile(testResourcesPath, expandedMavenIds);
-
         System.out.println("Total entries in Maven Index read: " + mavenIds.size());
+
+        return expandedMavenIds;
     }
 
     public static List<MavenId> extractAllVersions(List<MavenId> inputIds, Set<MavenId> maven) {
@@ -70,7 +69,7 @@ public class CoordsProcessor {
 
             newPackage.groupId = split[0];
             newPackage.artifactId = split[1];
-            newPackage.version = split[2].substring(0, split[2].indexOf("|"));
+            newPackage.version = split[2];
 
             coords.add(newPackage);
         }

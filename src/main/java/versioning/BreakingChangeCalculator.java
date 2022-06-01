@@ -1,5 +1,7 @@
 package versioning;
 
+import coordinates.CoordsProcessor;
+import eu.f4sten.pomanalyzer.data.MavenId;
 import eu.fasten.core.dbconnectors.PostgresConnector;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jooq.*;
@@ -9,7 +11,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class IncursionCalculator {
+public class BreakingChangeCalculator {
     /**
      * Gets DSLContext, requires *FASTENDB_PASS* environment variable in run configuration.
      *
@@ -17,7 +19,7 @@ public class IncursionCalculator {
      * @throws Exception if it can not connect.
      */
     private static DSLContext getDbContext() throws Exception {
-        return PostgresConnector.getDSLContext("jdbc:postgresql://localhost:5432/fasten_java", "fasten", false);
+        return PostgresConnector.getDSLContext("jdbc:postgresql://monster.ewi.tudelft.nl:5432/fasten_java", "simch", false);
     }
 
     public static class Major {
@@ -67,8 +69,9 @@ public class IncursionCalculator {
     public static void main(String[] args) throws Exception {
         long start = System.nanoTime();
         DSLContext context = getDbContext();
-        Result<Record4<String, Long, String, String>> results = AnalysisHandler.findMethods(context);
-        //Ideally sort results based on column fasten_uri
+
+        List<MavenId> coords = CoordsProcessor.getExpandedCoords();
+        Set<Result<Record4<String, Long, String, String>>> results = AnalysisHandler.findMethods(context, coords);
 
         Map<Long, Map<String, PriorityQueue<Method>>> packageIdMap = AnalysisHandler.createPackageIdMap(results);
         Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId = AnalysisHandler.getAllVersions(packageIdMap);
@@ -121,7 +124,7 @@ public class IncursionCalculator {
     public static void writeIncursionsToFile(String path, Map<Major, Incursion> incursions) throws IOException {
         FileWriter fw = new FileWriter(path + "/incursions");
         for (Major major : incursions.keySet()) {
-            fw.write(major + ": " + incursions.get(major).incursions + "/" + major.numberOfMethods + ",\n");
+            fw.write(major + ":" + incursions.get(major).incursions + "/" + major.numberOfMethods + ":" + incursions.get(major).incursing + "\n");
         }
         fw.close();
     }
