@@ -51,9 +51,7 @@ public class CoordsProcessor {
     public static void writeCoordsFile(String path, List<MavenId> mavenIds) throws IOException {
         FileWriter fw = new FileWriter(path + "/mvn.expanded_coords.txt");
         for (MavenId mavenId : mavenIds) {
-            fw.write(mavenId.groupId + "." + mavenId.artifactId + ":" + mavenId.version + "|{\"groupId\":\""
-                    + mavenId.groupId + "\",\"artifactId\":\"" + mavenId.artifactId + "\",\"version\":\""
-                    + mavenId.version + "\"}\n");
+            fw.write(mavenId.groupId + "." + mavenId.artifactId + ":" + mavenId.version);
         }
         fw.close();
     }

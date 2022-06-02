@@ -32,17 +32,17 @@
         <dependency>
             <groupId>eu.fasten-project</groupId>
             <artifactId>pom-analyzer</artifactId>
-            <version>0.0.8-SNAPSHOT</version>
+            <version>0.0.9-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>eu.fasten.analyzer</groupId>
             <artifactId>javacg-opal</artifactId>
-            <version>0.0.7-SNAPSHOT</version>
+            <version>0.0.9-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>eu.fasten-project</groupId>
             <artifactId>infrastructure</artifactId>
-            <version>0.0.8-SNAPSHOT</version>
+            <version>0.0.9-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -53,7 +53,7 @@
         <dependency>
             <groupId>eu.fasten-project</groupId>
             <artifactId>maven-crawler</artifactId>
-            <version>0.0.8-SNAPSHOT</version>
+            <version>0.0.9-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>

@@ -13,7 +13,7 @@ import java.util.*;
 
 public class BreakingChangeCalculator {
     /**
-     * Gets DSLContext, requires *FASTENDB_PASS* environment variable in run configuration.
+     * Gets DSLContext, requires *FASTEN_DBPASS* environment variable in run configuration.
      *
      * @return the database context.
      * @throws Exception if it can not connect.
@@ -71,7 +71,7 @@ public class BreakingChangeCalculator {
         long start = System.nanoTime();
         DSLContext context = getDbContext();
 
-        List<MavenId> coords = CoordsProcessor.readCoordsFile("/Users/mehdi/Desktop/MyMac/TUD/FASTEN/Repositories/OtherRepos/PersonalMavenAPI/src/mvn.expanded_coords.txt");
+        List<MavenId> coords = CoordsProcessor.readCoordsFile(Paths.get("").toAbsolutePath() + "/src/main/resources/mvn.expanded_coords_small.txt");
         Set<Result<Record4<String, Long, String, String>>> results = AnalysisHandler.findMethods(context, coords);
 
         Map<Long, Map<String, PriorityQueue<Method>>> packageIdMap = AnalysisHandler.createPackageIdMap(results);

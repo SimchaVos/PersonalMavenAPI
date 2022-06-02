@@ -1,2 +1,7 @@
-META-INF\extensions.idx
-Main.class
+META-INF/extensions.idx
+coordinates/CoordsProcessor.class
+versioning/BreakingChangeCalculator$Incursion.class
+versioning/BreakingChangeCalculator.class
+versioning/Method.class
+versioning/AnalysisHandler.class
+versioning/BreakingChangeCalculator$Major.class
