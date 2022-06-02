@@ -72,7 +72,7 @@ public class BreakingChangeCalculator {
         DSLContext context = getDbContext();
 
         List<MavenId> coords = CoordsProcessor.readCoordsFile(Paths.get("").toAbsolutePath() + "/src/main/resources/mvn.expanded_coords_small.txt");
-        Set<Result<Record4<String, Long, String, String>>> results = AnalysisHandler.findMethods(context, coords);
+        Set<Result<Record5<String, Long, String, String, Long>>> results = AnalysisHandler.findMethods(context, coords);
 
         Map<Long, Map<String, PriorityQueue<Method>>> packageIdMap = AnalysisHandler.createPackageIdMap(results);
         Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId = AnalysisHandler.getAllVersions(packageIdMap);
@@ -123,7 +123,8 @@ public class BreakingChangeCalculator {
     }
 
     public static void writeIncursionsToFile(String path, Map<Major, Incursion> incursions) throws IOException {
-        FileWriter fw = new FileWriter(Paths.get("").toAbsolutePath()+ "/incursions");
+        FileWriter fw = new FileWriter(Paths.get("").toAbsolutePath()+ "/src/main/resources/incursions.txt");
+        fw.write("Skip the first line when parsing this file. The format of this file is as follows: groupId:artifactId:majorVersion:#BC/#totalMethods:[callable.IDs with BC]\n");
         for (Major major : incursions.keySet()) {
             fw.write(major + ":" + incursions.get(major).incursions + "/" + major.numberOfMethods + ":" + incursions.get(major).incursing + "\n");
         }

@@ -9,17 +9,19 @@ class Method implements Comparable<Method> {
     String method;
     Long packageId;
     String packageName;
+    Long callableId;
 
     @Override
     public String toString() {
-        return this.packageId + ":" + this.method + "@v" + this.version;
+        return this.callableId.toString();
     }
 
-    public Method(String version, String method, Long packageId, String packageName) {
+    public Method(String version, String method, Long packageId, String packageName, Long callableId) {
         this.version = new DefaultArtifactVersion(version);
         this.method = method;
         this.packageId = packageId;
         this.packageName = packageName;
+        this.callableId = callableId;
     }
 
     /**

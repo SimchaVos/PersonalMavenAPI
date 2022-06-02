@@ -8,7 +8,7 @@ import eu.fasten.core.data.metadatadb.codegen.tables.Packages;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.DSLContext;
-import org.jooq.Record4;
+import org.jooq.Record5;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
 
@@ -22,18 +22,18 @@ public class AnalysisHandler {
      * @param results
      * @return
      */
-    public static Map<Long, Map<String, PriorityQueue<Method>>> createPackageIdMap(Set<Result<Record4<String, Long, String, String>>> results) {
+    public static Map<Long, Map<String, PriorityQueue<Method>>> createPackageIdMap(Set<Result<Record5<String, Long, String, String, Long>>> results) {
         Map<Long, Map<String, PriorityQueue<Method>>> packageIdMap = new HashMap<>();
 
         //           Method, PackageID, Version, Name
-        for (Result<Record4<String, Long, String, String>> result : results) {
-            for (Record4<String, Long, String, String> record : result) {
+        for (Result<Record5<String, Long, String, String, Long>> result : results) {
+            for (Record5<String, Long, String, String, Long> record : result) {
                 String method = record.value1();
                 Long packageId = record.value2();
                 String version = record.value3();
                 packageIdMap.computeIfAbsent(packageId, k -> new HashMap<>());
                 packageIdMap.get(packageId).computeIfAbsent(method, k -> new PriorityQueue<>());
-                packageIdMap.get(packageId).get(method).add(new Method(version, method, packageId, record.value4()));
+                packageIdMap.get(packageId).get(method).add(new Method(version, method, packageId, record.value4(), record.value5()));
             }
         }
 
@@ -60,8 +60,8 @@ public class AnalysisHandler {
     }
 
     public static @NotNull
-    Set<Result<Record4<String, Long, String, String>>> findMethods(DSLContext context, List<MavenId> mavenIds) {
-        Set<Result<Record4<String, Long, String, String>>> results = new HashSet<Result<Record4<String, Long, String, String>>>();
+    Set<Result<Record5<String, Long, String, String, Long>>> findMethods(DSLContext context, List<MavenId> mavenIds) {
+        Set<Result<Record5<String, Long, String, String, Long>>> results = new HashSet<Result<Record5<String, Long, String, String, Long>>>();
         for (MavenId mavenId : mavenIds) {
             results.add(findMethodsPerArtifact(context, mavenId));
         }
@@ -74,9 +74,9 @@ public class AnalysisHandler {
      * @return
      */
     public static @NotNull
-    Result<Record4<String, Long, String, String>> findMethodsPerArtifact(DSLContext context, MavenId mavenId) {
+    Result<Record5<String, Long, String, String, Long>> findMethodsPerArtifact(DSLContext context, MavenId mavenId) {
         return context.select(Callables.CALLABLES.FASTEN_URI, PackageVersions.PACKAGE_VERSIONS.PACKAGE_ID,
-                        PackageVersions.PACKAGE_VERSIONS.VERSION, Packages.PACKAGES.PACKAGE_NAME)
+                        PackageVersions.PACKAGE_VERSIONS.VERSION, Packages.PACKAGES.PACKAGE_NAME, Callables.CALLABLES.ID)
                 .from("callables")
                 .join("modules").on(DSL.field("module_id").eq(DSL.field("modules.id")))
                 .join("package_versions").on(DSL.field("package_version_id").eq(DSL.field("package_versions.id")))
@@ -91,11 +91,11 @@ public class AnalysisHandler {
     }
 
     //                                                                                               Method, PackageID, Version
-    public static Map<Long, Map<DefaultArtifactVersion, Integer>> getMethodsPerVersion(Set<Result<Record4<String, Long, String, String>>> results) {
+    public static Map<Long, Map<DefaultArtifactVersion, Integer>> getMethodsPerVersion(Set<Result<Record5<String, Long, String, String, Long>>> results) {
         Map<Long, Map<DefaultArtifactVersion, Integer>> versions = new HashMap<>();
 
-        for (Result<Record4<String, Long, String, String>> result : results) {
-            for (Record4<String, Long, String, String> record : result) {
+        for (Result<Record5<String, Long, String, String, Long>> result : results) {
+            for (Record5<String, Long, String, String, Long> record : result) {
                 Long packageId = record.value2();
                 DefaultArtifactVersion version = new DefaultArtifactVersion(record.value3());
                 versions.putIfAbsent(packageId, new HashMap<>());
