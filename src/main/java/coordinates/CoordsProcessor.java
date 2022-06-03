@@ -13,14 +13,14 @@ import java.util.*;
 
 public class CoordsProcessor {
     public static void main(String[] args) throws Exception {
-        writeCoordsFile(Paths.get("").toAbsolutePath().getParent().resolve("fasten-docker-deployment\\test-resources\\").toString(), getExpandedCoords());
+        writeCoordsFile(Paths.get("").toAbsolutePath() + "/src/main/resources/", getExpandedCoords());
     }
 
     public static List<MavenId> getExpandedCoords() throws Exception {
-        String testResourcesPath = Paths.get("").toAbsolutePath().getParent().resolve("fasten-docker-deployment\\test-resources\\").toString();
-        List<MavenId> input = readCoordsFile(testResourcesPath + "/artifacts.txt");
+        String resourcesPath = Paths.get("").toAbsolutePath() + "/src/main/resources/";
+        List<MavenId> input = readCoordsFile(resourcesPath + "artifacts.txt");
         FileReader fr = new FileReader();
-        Set<MavenId> mavenIds = fr.readIndexFile(new File(testResourcesPath + "/nexus-maven-repository-index.gz"));
+        Set<MavenId> mavenIds = fr.readIndexFile(new File(resourcesPath + "nexus-maven-repository-index.gz"));
 
         System.out.println("Done reading the Maven Index.");
         List<MavenId> expandedMavenIds = extractAllVersions(input, mavenIds);
@@ -31,8 +31,12 @@ public class CoordsProcessor {
 
     public static List<MavenId> extractAllVersions(List<MavenId> inputIds, Set<MavenId> maven) {
         List<MavenId> result = new ArrayList<>();
-
+        int i = 0;
         for (MavenId currInput : inputIds) {
+            if (i++ == inputIds.size() / 10) {
+                System.out.print("|");
+                i = 0;
+            }
             for (MavenId mavenId : maven) {
                 DefaultArtifactVersion inp_v = new DefaultArtifactVersion(currInput.version);
                 DefaultArtifactVersion mav_v = new DefaultArtifactVersion(mavenId.version);
@@ -49,9 +53,9 @@ public class CoordsProcessor {
     }
 
     public static void writeCoordsFile(String path, List<MavenId> mavenIds) throws IOException {
-        FileWriter fw = new FileWriter(path + "/mvn.expanded_coords.txt");
+        FileWriter fw = new FileWriter(path + "mvn.expanded_coords.txt");
         for (MavenId mavenId : mavenIds) {
-            fw.write(mavenId.groupId + "." + mavenId.artifactId + ":" + mavenId.version);
+            fw.write(mavenId.groupId + ":" + mavenId.artifactId + ":" + mavenId.version + "\n");
         }
         fw.close();
     }
