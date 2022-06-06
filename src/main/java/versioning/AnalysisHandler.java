@@ -22,8 +22,8 @@ public class AnalysisHandler {
      * @param results
      * @return
      */
-    public static Map<Long, Map<String, PriorityQueue<Method>>> createPackageIdMap(Set<Result<Record5<String, Long, String, String, Long>>> results) {
-        Map<Long, Map<String, PriorityQueue<Method>>> packageIdMap = new HashMap<>();
+    public static Map<String, Map<String, PriorityQueue<Method>>> createPackageIdMap(Set<Result<Record5<String, Long, String, String, Long>>> results) {
+        Map<String, Map<String, PriorityQueue<Method>>> packageIdMap = new HashMap<>();
 
         //           Method, PackageID, Version, Name
         for (Result<Record5<String, Long, String, String, Long>> result : results) {
@@ -31,9 +31,11 @@ public class AnalysisHandler {
                 String method = record.value1();
                 Long packageId = record.value2();
                 String version = record.value3();
-                packageIdMap.computeIfAbsent(packageId, k -> new HashMap<>());
-                packageIdMap.get(packageId).computeIfAbsent(method, k -> new PriorityQueue<>());
-                packageIdMap.get(packageId).get(method).add(new Method(version, method, packageId, record.value4(), record.value5()));
+                int major = new DefaultArtifactVersion(version).getMajorVersion();
+                String key = packageId + String.valueOf(major);
+                packageIdMap.computeIfAbsent(key, k -> new HashMap<>());
+                packageIdMap.get(key).computeIfAbsent(method, k -> new PriorityQueue<>());
+                packageIdMap.get(key).get(method).add(new Method(version, method, packageId, record.value4(), record.value5()));
             }
         }
 
@@ -45,7 +47,7 @@ public class AnalysisHandler {
      * @param packageIdMap
      * @return
      */
-    public static Map<Long, Set<DefaultArtifactVersion>> getAllVersions(Map<Long, Map<String, PriorityQueue<Method>>> packageIdMap) {
+    public static Map<Long, Set<DefaultArtifactVersion>> getAllVersions(Map<String, Map<String, PriorityQueue<Method>>> packageIdMap) {
         Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId = new HashMap<>();
 
         for (Map<String, PriorityQueue<Method>> methods : packageIdMap.values()) {
