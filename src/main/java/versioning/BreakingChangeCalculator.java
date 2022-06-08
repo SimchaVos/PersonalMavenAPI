@@ -27,10 +27,6 @@ public class BreakingChangeCalculator {
     }
 
     public static void main(String[] args) throws Exception {
-        calculateMethodRemove();
-    }
-
-    public static void calculateMethodRemove() throws Exception {
         long start = System.nanoTime();
         DSLContext context = getDbContext();
 
@@ -41,6 +37,68 @@ public class BreakingChangeCalculator {
         Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId = AnalysisHandler.getAllVersions(packageIdMap);
         Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion = AnalysisHandler.getMethodsPerVersion(results);
 
+
+        calculateMethodAddition(start, packageIdMap, versionsPerPackageId, methodsPerVersion);
+    }
+
+    public static void calculateMethodAddition(long start, Map<String, Map<String, PriorityQueue<Method>>> packageIdMap,
+                                               Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId,
+                                               Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion) throws Exception {
+
+        Map<Major, BreakingChange> incursions = new HashMap<>();
+
+        for (Map<String, PriorityQueue<Method>> methods : packageIdMap.values()) {
+            for (PriorityQueue<Method> versions : methods.values()) {
+                PriorityQueue<Method> reverse = new PriorityQueue<>(Collections.reverseOrder());
+                reverse.addAll(versions);
+
+                Method newest = versions.peek();
+                Long packageId = newest.packageId;
+                DefaultArtifactVersion found = newest.version;
+
+                Set<DefaultArtifactVersion> lowerVersions = new HashSet<>();
+
+                // Identify all versions that have been released, which have a version number higher than the number at
+                // which the method was introduced. Note that major releases don't count.
+                for (DefaultArtifactVersion version : versionsPerPackageId.get(newest.packageId)) {
+                    if (version.getMajorVersion() == found.getMajorVersion() &&
+                            version.getMajorVersion() == found.getMinorVersion() &&
+                            version.compareTo(found) < 0) {
+                        lowerVersions.add(version);
+                    }
+                }
+                if (lowerVersions.size() > 0) {
+                    int a = 1;
+                }
+                // Every version in higherVersions should have a corresponding method record in the database (versions
+                // priority queue).
+                while (!versions.isEmpty()) {
+                    DefaultArtifactVersion curr = versions.poll().version;
+                    lowerVersions.removeIf(curr::equals);
+                }
+                Major major = new Major(packageId, found.getMajorVersion(),
+                        methodsPerVersion.get(packageId).get(found), newest.packageName);
+                incursions.putIfAbsent(major, new BreakingChange());
+
+                // Now we calculate all the incursions. Each time there are higherVersions which do not have a corresponding
+                // method record, we increment the incursions of the package.
+                if (!lowerVersions.isEmpty()) {
+                    BreakingChange incursion = incursions.get(major);
+                    incursion.incursing.add(newest);
+                    incursion.incursions++;
+                }
+            }
+
+        }
+        System.out.println(incursions);
+        System.out.println("Execution time: " + (System.nanoTime() - start) / 1000000 + "ms");
+
+        writeBreakingChangesToFile(incursions);
+    }
+
+    public static void calculateMethodRemove(long start, Map<String, Map<String, PriorityQueue<Method>>> packageIdMap,
+                                             Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId,
+                                             Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion) throws Exception {
         Map<Major, BreakingChange> incursions = new HashMap<>();
 
         for (Map<String, PriorityQueue<Method>> methods : packageIdMap.values()) {
