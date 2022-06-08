@@ -52,11 +52,11 @@ public class BreakingChangeCalculator {
         }
     }
 
-    public static class Incursion {
+    public static class BreakingChange {
         int incursions;
         Set<Method> incursing;
 
-        public Incursion() {
+        public BreakingChange() {
             this.incursions = 0;
             this.incursing = new HashSet<>();
         }
@@ -78,7 +78,7 @@ public class BreakingChangeCalculator {
         Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId = AnalysisHandler.getAllVersions(packageIdMap);
         Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion = AnalysisHandler.getMethodsPerVersion(results);
 
-        Map<Major, Incursion> incursions = new HashMap<>();
+        Map<Major, BreakingChange> incursions = new HashMap<>();
 
         for (Map<String, PriorityQueue<Method>> methods : packageIdMap.values()) {
             for (PriorityQueue<Method> versions : methods.values()) {
@@ -103,12 +103,12 @@ public class BreakingChangeCalculator {
                 }
                 Major major = new Major(packageId, introduced.getMajorVersion(),
                         methodsPerVersion.get(packageId).get(introduced), oldest.packageName);
-                incursions.putIfAbsent(major, new Incursion());
+                incursions.putIfAbsent(major, new BreakingChange());
 
                 // Now we calculate all the incursions. Each time there are higherVersions which do not have a corresponding
                 // method record, we increment the incursions of the package.
                 if (!higherVersions.isEmpty()) {
-                    Incursion incursion = incursions.get(major);
+                    BreakingChange incursion = incursions.get(major);
                     incursion.incursing.add(oldest);
                     incursion.incursions++;
                 }
@@ -118,11 +118,11 @@ public class BreakingChangeCalculator {
         System.out.println(incursions);
         System.out.println("Execution time: " + (System.nanoTime() - start) / 1000000 + "ms");
 
-        writeIncursionsToFile(Paths.get("").toAbsolutePath().getParent().resolve("fasten-docker-deployment\\test-resources\\").toString(),
+        writeBreakingChangesToFile(Paths.get("").toAbsolutePath().getParent().resolve("fasten-docker-deployment\\test-resources\\").toString(),
                 incursions);
     }
 
-    public static void writeIncursionsToFile(String path, Map<Major, Incursion> incursions) throws IOException {
+    public static void writeBreakingChangesToFile(String path, Map<Major, BreakingChange> incursions) throws IOException {
         FileWriter fw = new FileWriter(Paths.get("").toAbsolutePath()+ "/src/main/resources/incursions.txt");
         fw.write("Skip the first line when parsing this file. The format of this file is as follows: groupId:artifactId:majorVersion:#BC/#totalMethods:[callable.IDs with BC]\n");
         for (Major major : incursions.keySet()) {
