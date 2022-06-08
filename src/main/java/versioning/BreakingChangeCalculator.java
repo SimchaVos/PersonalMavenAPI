@@ -68,6 +68,12 @@ public class BreakingChangeCalculator {
     }
 
     public static void main(String[] args) throws Exception {
+        calculateMethodRemove();
+    }
+
+
+
+    public static void calculateMethodRemove() throws Exception {
         long start = System.nanoTime();
         DSLContext context = getDbContext();
 
@@ -118,11 +124,10 @@ public class BreakingChangeCalculator {
         System.out.println(incursions);
         System.out.println("Execution time: " + (System.nanoTime() - start) / 1000000 + "ms");
 
-        writeBreakingChangesToFile(Paths.get("").toAbsolutePath().getParent().resolve("fasten-docker-deployment\\test-resources\\").toString(),
-                incursions);
+        writeBreakingChangesToFile(incursions);
     }
 
-    public static void writeBreakingChangesToFile(String path, Map<Major, BreakingChange> incursions) throws IOException {
+    public static void writeBreakingChangesToFile(Map<Major, BreakingChange> incursions) throws IOException {
         FileWriter fw = new FileWriter(Paths.get("").toAbsolutePath()+ "/src/main/resources/incursions.txt");
         fw.write("Skip the first line when parsing this file. The format of this file is as follows: groupId:artifactId:majorVersion:#BC/#totalMethods:[callable.IDs with BC]\n");
         for (Major major : incursions.keySet()) {
