@@ -1,15 +1,13 @@
-package versioning;
+package versioning.entities;
 
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
-import java.util.Arrays;
-
-class Method implements Comparable<Method> {
-    DefaultArtifactVersion version;
-    String method;
-    Long packageId;
-    String packageName;
-    Long callableId;
+public class Method implements Comparable<Method> {
+    public DefaultArtifactVersion version;
+    public String method;
+    public Long packageId;
+    public String packageName;
+    public Long callableId;
 
     @Override
     public String toString() {

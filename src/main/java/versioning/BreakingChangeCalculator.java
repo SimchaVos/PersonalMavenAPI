@@ -5,6 +5,9 @@ import eu.f4sten.pomanalyzer.data.MavenId;
 import eu.fasten.core.dbconnectors.PostgresConnector;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jooq.*;
+import versioning.entities.BreakingChange;
+import versioning.entities.Major;
+import versioning.entities.Method;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -23,55 +26,9 @@ public class BreakingChangeCalculator {
             "fasten", false);
     }
 
-    public static class Major {
-        Long packageId;
-        int majorVersion;
-        int numberOfMethods;
-        String packageName;
-
-        public Major(Long packageId, int majorVersion, int numberOfMethods, String packageName) {
-            this.packageId = packageId;
-            this.majorVersion = majorVersion;
-            this.numberOfMethods = numberOfMethods;
-            this.packageName = packageName;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            return this.packageId.equals(((Major) o).packageId) && this.majorVersion == ((Major) o).majorVersion;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(packageId, majorVersion);
-        }
-
-        @Override
-        public String toString() {
-            return this.packageName + ":" + this.majorVersion;
-        }
-    }
-
-    public static class BreakingChange {
-        int incursions;
-        Set<Method> incursing;
-
-        public BreakingChange() {
-            this.incursions = 0;
-            this.incursing = new HashSet<>();
-        }
-
-        @Override
-        public String toString() {
-            return "{ " + this.incursions + " incursions in " + this.incursing;
-        }
-    }
-
     public static void main(String[] args) throws Exception {
         calculateMethodRemove();
     }
-
-
 
     public static void calculateMethodRemove() throws Exception {
         long start = System.nanoTime();

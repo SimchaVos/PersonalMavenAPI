@@ -11,6 +11,7 @@ import org.jooq.DSLContext;
 import org.jooq.Record5;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
+import versioning.entities.Method;
 
 import java.util.*;
 
