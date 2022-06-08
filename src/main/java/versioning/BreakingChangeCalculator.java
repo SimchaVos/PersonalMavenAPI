@@ -3,6 +3,7 @@ package versioning;
 import coordinates.CoordsProcessor;
 import eu.f4sten.pomanalyzer.data.MavenId;
 import eu.fasten.core.dbconnectors.PostgresConnector;
+import kotlin.random.Random;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jooq.*;
 import versioning.entities.BreakingChange;
@@ -13,6 +14,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class BreakingChangeCalculator {
     /**
@@ -52,40 +54,44 @@ public class BreakingChangeCalculator {
                 PriorityQueue<Method> reverse = new PriorityQueue<>(Collections.reverseOrder());
                 reverse.addAll(versions);
 
-                Method newest = versions.peek();
-                Long packageId = newest.packageId;
-                DefaultArtifactVersion found = newest.version;
-
-                Set<DefaultArtifactVersion> lowerVersions = new HashSet<>();
-
-                // Identify all versions that have been released, which have a version number higher than the number at
-                // which the method was introduced. Note that major releases don't count.
-                for (DefaultArtifactVersion version : versionsPerPackageId.get(newest.packageId)) {
-                    if (version.getMajorVersion() == found.getMajorVersion() &&
-                            version.getMajorVersion() == found.getMinorVersion() &&
-                            version.compareTo(found) < 0) {
-                        lowerVersions.add(version);
+                for (Method curr : reverse) {
+                    Method newest = curr;
+                    Long packageId = newest.packageId;
+                    if (newest.packageName.equals("io.micronaut:micronaut-aop")) {
+                        int a = 1;
                     }
-                }
-                if (lowerVersions.size() > 0) {
-                    int a = 1;
-                }
-                // Every version in higherVersions should have a corresponding method record in the database (versions
-                // priority queue).
-                while (!versions.isEmpty()) {
-                    DefaultArtifactVersion curr = versions.poll().version;
-                    lowerVersions.removeIf(curr::equals);
-                }
-                Major major = new Major(packageId, found.getMajorVersion(),
-                        methodsPerVersion.get(packageId).get(found), newest.packageName);
-                incursions.putIfAbsent(major, new BreakingChange());
+                    DefaultArtifactVersion found = newest.version;
 
-                // Now we calculate all the incursions. Each time there are higherVersions which do not have a corresponding
-                // method record, we increment the incursions of the package.
-                if (!lowerVersions.isEmpty()) {
-                    BreakingChange incursion = incursions.get(major);
-                    incursion.incursing.add(newest);
-                    incursion.incursions++;
+                    PriorityQueue<DefaultArtifactVersion> lowerVersions = new PriorityQueue<>(Collections.reverseOrder());
+
+                    // Identify all versions that have been released, which have a version number higher than the number at
+                    // which the method was introduced. Note that major releases don't count.
+                    for (DefaultArtifactVersion version : versionsPerPackageId.get(newest.packageId)) {
+                        if (version.getMajorVersion() == found.getMajorVersion() &&
+                                version.getMajorVersion() == found.getMinorVersion() &&
+                                version.compareTo(found) < 0) {
+                            lowerVersions.add(version);
+                        }
+                    }
+
+                    // Every version in higherVersions should have a corresponding method record in the database (versions
+                    // priority queue).
+                    DefaultArtifactVersion oneLower = getLowerVersion(reverse.stream().map(x -> x.version).collect(Collectors.toSet()), newest.version);
+
+                    Major major = new Major(packageId, found.getMajorVersion(),
+                            methodsPerVersion.get(packageId).get(found), newest.packageName);
+                    incursions.putIfAbsent(major, new BreakingChange());
+
+                    if (lowerVersions.isEmpty()) continue;
+
+                    // Now we calculate all the incursions. Each time there are higherVersions which do not have a corresponding
+                    // method record, we increment the incursions of the package.
+                    DefaultArtifactVersion totalLower = lowerVersions.poll();
+                    if (oneLower != null && !oneLower.equals(totalLower)) {
+                        BreakingChange incursion = incursions.get(major);
+                        incursion.incursing.add(newest);
+                        incursion.incursions++;
+                    }
                 }
             }
 
@@ -103,35 +109,37 @@ public class BreakingChangeCalculator {
 
         for (Map<String, PriorityQueue<Method>> methods : packageIdMap.values()) {
             for (PriorityQueue<Method> versions : methods.values()) {
-                Method oldest = versions.peek();
-                Long packageId = oldest.packageId;
-                DefaultArtifactVersion introduced = oldest.version;
+                for (Method curr : versions) {
+                    Method oldest = curr;
+                    Long packageId = oldest.packageId;
+                    DefaultArtifactVersion introduced = oldest.version;
+                    PriorityQueue<Method> versionsWithMethod = new PriorityQueue<>(versions);
+                    PriorityQueue<DefaultArtifactVersion> higherVersionsTotal = new PriorityQueue<>();
 
-                Set<DefaultArtifactVersion> higherVersions = new HashSet<>();
-
-                // Identify all versions that have been released, which have a version number higher than the number at
-                // which the method was introduced. Note that major releases don't count.
-                for (DefaultArtifactVersion version : versionsPerPackageId.get(oldest.packageId)) {
-                    if (version.getMajorVersion() == introduced.getMajorVersion() && version.compareTo(introduced) > 0) {
-                        higherVersions.add(version);
+                    // Identify all versions that have been released, which have a version number higher than the number at
+                    // which the method was introduced. Note that major releases don't count.
+                    for (DefaultArtifactVersion version : versionsPerPackageId.get(oldest.packageId)) {
+                        if (version.getMajorVersion() == introduced.getMajorVersion() && version.compareTo(introduced) > 0) {
+                            higherVersionsTotal.add(version);
+                        }
                     }
-                }
-                // Every version in higherVersions should have a corresponding method record in the database (versions
-                // priority queue).
-                while (!versions.isEmpty()) {
-                    DefaultArtifactVersion curr = versions.poll().version;
-                    higherVersions.removeIf(curr::equals);
-                }
-                Major major = new Major(packageId, introduced.getMajorVersion(),
-                        methodsPerVersion.get(packageId).get(introduced), oldest.packageName);
-                incursions.putIfAbsent(major, new BreakingChange());
 
-                // Now we calculate all the incursions. Each time there are higherVersions which do not have a corresponding
-                // method record, we increment the incursions of the package.
-                if (!higherVersions.isEmpty()) {
-                    BreakingChange incursion = incursions.get(major);
-                    incursion.incursing.add(oldest);
-                    incursion.incursions++;
+                    DefaultArtifactVersion nextVersionWithMethod = getHigherVersion(versionsWithMethod.stream().map(x -> x.version).collect(Collectors.toSet()), introduced);
+
+                    Major major = new Major(packageId, introduced.getMajorVersion(),
+                            methodsPerVersion.get(packageId).get(introduced), oldest.packageName);
+                    incursions.putIfAbsent(major, new BreakingChange());
+
+                    if (higherVersionsTotal.isEmpty()) continue;
+
+                    // Now we calculate all the incursions. Each time there are higherVersions which do not have a corresponding
+                    // method record, we increment the incursions of the package.
+                    DefaultArtifactVersion nextVersionTotal = higherVersionsTotal.poll();
+                    if (!nextVersionTotal.equals(nextVersionWithMethod)) {
+                        BreakingChange incursion = incursions.get(major);
+                        incursion.incursing.add(oldest);
+                        incursion.incursions++;
+                    }
                 }
             }
 
@@ -140,6 +148,28 @@ public class BreakingChangeCalculator {
         System.out.println("Execution time: " + (System.nanoTime() - start) / 1000000 + "ms");
 
         writeBreakingChangesToFile(incursions);
+    }
+
+    public static DefaultArtifactVersion getLowerVersion(Set<DefaultArtifactVersion> lowerVersions, DefaultArtifactVersion version) {
+        PriorityQueue<DefaultArtifactVersion> pq = new PriorityQueue<>(Collections.reverseOrder());
+        pq.addAll(lowerVersions);
+
+        DefaultArtifactVersion curr = pq.poll();
+        while (!curr.equals(version)) {
+            curr = pq.poll();
+        }
+        return pq.poll();
+    }
+
+    public static DefaultArtifactVersion getHigherVersion(Set<DefaultArtifactVersion> lowerVersions, DefaultArtifactVersion version) {
+        PriorityQueue<DefaultArtifactVersion> pq = new PriorityQueue<>();
+        pq.addAll(lowerVersions);
+
+        DefaultArtifactVersion curr = pq.poll();
+        while (!curr.equals(version)) {
+            curr = pq.poll();
+        }
+        return pq.poll();
     }
 
     public static void writeBreakingChangesToFile(Map<Major, BreakingChange> incursions) throws IOException {
