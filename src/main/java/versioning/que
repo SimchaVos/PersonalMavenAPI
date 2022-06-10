@@ -69,7 +69,7 @@ public class BreakingChangeCalculator {
                         }
                     }
 
-                    calculateViolations(reverse, lowerVersionsWoWMethod, incursions, newest, methodsPerVersion);
+                    calculateViolations(versions, lowerVersionsWoWMethod, incursions, newest, methodsPerVersion);
 
                 }
             }
