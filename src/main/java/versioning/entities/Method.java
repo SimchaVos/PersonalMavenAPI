@@ -11,7 +11,7 @@ public class Method implements Comparable<Method> {
 
     @Override
     public String toString() {
-        return this.callableId.toString();
+        return this.callableId.toString() + "/" + this.version.toString();
     }
 
     public Method(String version, String method, Long packageId, String packageName, Long callableId) {

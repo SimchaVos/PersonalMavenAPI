@@ -39,8 +39,7 @@ public class BreakingChangeCalculator {
         Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId = AnalysisHandler.getAllVersions(packageIdMap);
         Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion = AnalysisHandler.getMethodsPerVersion(results);
 
-
-        calculateMethodAddition(start, packageIdMap, versionsPerPackageId, methodsPerVersion);
+        calculateMethodRemove(start, packageIdMap, versionsPerPackageId, methodsPerVersion);
     }
 
     public static void calculateMethodAddition(long start, Map<String, Map<String, PriorityQueue<Method>>> packageIdMap,
@@ -68,12 +67,9 @@ public class BreakingChangeCalculator {
                             lowerVersionsWoWMethod.add(version);
                         }
                     }
-
                     calculateViolations(reverse, lowerVersionsWoWMethod, incursions, newest, methodsPerVersion);
-
                 }
             }
-
         }
         System.out.println(incursions);
         System.out.println("Execution time: " + (System.nanoTime() - start) / 1000000 + "ms");
@@ -101,9 +97,7 @@ public class BreakingChangeCalculator {
                             higherVersionsWoWMethod.add(version);
                         }
                     }
-
                     calculateViolations(versions, higherVersionsWoWMethod, incursions, oldest, methodsPerVersion);
-
                 }
             }
 
