@@ -39,7 +39,7 @@ public class BreakingChangeCalculator {
         Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId = AnalysisHandler.getAllVersions(packageIdMap);
         Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion = AnalysisHandler.getMethodsPerVersion(results);
 
-        calculateMethodRemove(start, packageIdMap, versionsPerPackageId, methodsPerVersion);
+        calculateMethodAddition(start, packageIdMap, versionsPerPackageId, methodsPerVersion);
     }
 
     public static void calculateMethodAddition(long start, Map<String, Map<String, PriorityQueue<Method>>> packageIdMap,
@@ -112,7 +112,7 @@ public class BreakingChangeCalculator {
                                            PriorityQueue<DefaultArtifactVersion> subsequentVersionsWoWMethod,
                                            Map<Major, BreakingChange> violations, Method current,
                                            Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion) {
-        Major major = new Major(current.packageId, current.version.getMajorVersion(),
+        Major major = new Major(current.packageId, current.version,
                 methodsPerVersion.get(current.packageId).get(current.version), current.packageName);
         violations.putIfAbsent(major, new BreakingChange());
 
