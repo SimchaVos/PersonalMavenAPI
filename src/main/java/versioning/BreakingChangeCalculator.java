@@ -16,6 +16,8 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static versioning.AnalysisHandler.getMajor;
+
 public class BreakingChangeCalculator {
     /**
      * Gets DSLContext, requires *FASTEN_DBPASS* environment variable in run configuration.
@@ -39,7 +41,7 @@ public class BreakingChangeCalculator {
         Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId = AnalysisHandler.getAllVersions(packageIdMap);
         Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion = AnalysisHandler.getMethodsPerVersion(results);
 
-        calculateMethodAddition(start, packageIdMap, versionsPerPackageId, methodsPerVersion);
+        calculateMethodRemove(start, packageIdMap, versionsPerPackageId, methodsPerVersion);
     }
 
     public static void calculateMethodAddition(long start, Map<String, Map<String, PriorityQueue<Method>>> packageIdMap,
@@ -92,7 +94,7 @@ public class BreakingChangeCalculator {
                     // Identify all versions that have been released, which have a version number higher than the number at
                     // which the method was introduced. Note that major releases don't count.
                     for (DefaultArtifactVersion version : versionsPerPackageId.get(oldest.packageId)) {
-                        if (version.getMajorVersion() == oldest.version.getMajorVersion() &&
+                        if (getMajor(version.toString()) == getMajor(oldest.version.toString()) &&
                                 version.compareTo(oldest.version) > 0) {
                             higherVersionsWoWMethod.add(version);
                         }
@@ -138,28 +140,6 @@ public class BreakingChangeCalculator {
             incursion.incursing.add(current);
             incursion.incursions++;
         }
-    }
-
-    public static DefaultArtifactVersion getLowerVersion(Set<DefaultArtifactVersion> lowerVersions, DefaultArtifactVersion version) {
-        PriorityQueue<DefaultArtifactVersion> pq = new PriorityQueue<>(Collections.reverseOrder());
-        pq.addAll(lowerVersions);
-
-        DefaultArtifactVersion curr = pq.poll();
-        while (!curr.equals(version)) {
-            curr = pq.poll();
-        }
-        return pq.poll();
-    }
-
-    public static DefaultArtifactVersion getHigherVersion(Set<DefaultArtifactVersion> lowerVersions, DefaultArtifactVersion version) {
-        PriorityQueue<DefaultArtifactVersion> pq = new PriorityQueue<>();
-        pq.addAll(lowerVersions);
-
-        DefaultArtifactVersion curr = pq.poll();
-        while (!curr.equals(version)) {
-            curr = pq.poll();
-        }
-        return pq.poll();
     }
 
     public static void writeBreakingChangesToFile(Map<Major, BreakingChange> incursions) throws IOException {

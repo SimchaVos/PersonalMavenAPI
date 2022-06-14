@@ -4,6 +4,8 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import java.util.Objects;
 
+import static versioning.AnalysisHandler.getMajor;
+
 public class Major {
     public Long packageId;
     public int majorVersion;
@@ -12,12 +14,7 @@ public class Major {
 
     public Major(Long packageId, DefaultArtifactVersion version, int numberOfMethods, String packageName) {
         this.packageId = packageId;
-        if (version.getMajorVersion() == 0) {
-            this.majorVersion = Integer.parseInt(version.toString().split("\\.")[0]);
-        }
-        else {
-            this.majorVersion = version.getMajorVersion();
-        }
+        this.majorVersion = getMajor(version.toString());
         this.numberOfMethods = numberOfMethods;
         this.packageName = packageName;
     }

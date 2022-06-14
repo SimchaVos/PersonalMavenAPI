@@ -32,7 +32,7 @@ public class AnalysisHandler {
                 String method = record.value1();
                 Long packageId = record.value2();
                 String version = record.value3();
-                int major = new DefaultArtifactVersion(version).getMajorVersion();
+                int major = getMajor(version);
                 String key = packageId + String.valueOf(major);
                 packageIdMap.computeIfAbsent(key, k -> new HashMap<>());
                 packageIdMap.get(key).computeIfAbsent(method, k -> new PriorityQueue<>());
@@ -41,6 +41,14 @@ public class AnalysisHandler {
         }
 
         return packageIdMap;
+    }
+
+    public static int getMajor(String version) {
+        int major = new DefaultArtifactVersion(version).getMajorVersion();
+        if (major == 0) {
+            return Integer.parseInt(version.split("\\.")[0]);
+        }
+        return major;
     }
 
     /**
