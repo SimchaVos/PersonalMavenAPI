@@ -1,5 +1,6 @@
 package versioning;
 
+import coordinates.CoordsProcessor;
 import eu.f4sten.pomanalyzer.data.MavenId;
 import eu.fasten.core.data.metadatadb.codegen.enums.Access;
 import eu.fasten.core.data.metadatadb.codegen.tables.Callables;
@@ -8,11 +9,16 @@ import eu.fasten.core.data.metadatadb.codegen.tables.Packages;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.DSLContext;
+import org.jooq.Record1;
 import org.jooq.Record5;
 import org.jooq.Result;
 import org.jooq.impl.DSL;
+import versioning.entities.BreakingChange;
+import versioning.entities.Major;
 import versioning.entities.Method;
 
+import java.io.FileNotFoundException;
+import java.nio.file.Paths;
 import java.util.*;
 
 public class AnalysisHandler {
@@ -77,6 +83,42 @@ public class AnalysisHandler {
             results.add(findMethodsPerArtifact(context, mavenId));
         }
         return results;
+    }
+
+    public static void getOldCallableIds(DSLContext context, Map<Major, BreakingChange> violations) throws FileNotFoundException {
+        List<MavenId> coords = CoordsProcessor.readCoordsFile(Paths.get("").toAbsolutePath() + "/src/main/resources/artifacts.txt");
+
+        for (BreakingChange bc : violations.values()) {
+            for (Method method : bc.incursing) {
+                if (method.version.toString().equals("1.2.18.3")) {
+                    int a = 1;
+                }
+                var l = getOldCallableId(context, method, coords);
+                method.callableId = l;
+            }
+        }
+    }
+
+    public static Long getOldCallableId(DSLContext context, Method method, List<MavenId> coords) {
+        String version = "";
+
+        for (MavenId mavenId : coords) {
+            if (mavenId.asCoordinate().startsWith(method.packageName)) {
+                version = mavenId.version;
+            }
+        }
+
+        Result<Record1<Long>> result = context.select(Callables.CALLABLES.ID)
+                .from("callables")
+                .join("modules").on(DSL.field("module_id").eq(DSL.field("modules.id")))
+                .join("package_versions").on(DSL.field("package_version_id").eq(DSL.field("package_versions.id")))
+                .join("packages").on(DSL.field("package_versions.package_id").eq(DSL.field("packages.id")))
+                .where(DSL.field("packages.package_name").eq(method.packageName))
+                .and(DSL.field("package_versions.version").eq(version))
+                .and(DSL.field("callables.fasten_uri").eq(method.method))
+                .fetch();
+
+        return result.size() == 0 ? method.callableId : result.get(0).value1();
     }
 
     /**

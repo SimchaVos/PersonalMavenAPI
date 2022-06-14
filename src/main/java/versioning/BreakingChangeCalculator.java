@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static versioning.AnalysisHandler.getMajor;
+import static versioning.AnalysisHandler.getOldCallableIds;
 
 public class BreakingChangeCalculator {
     /**
@@ -41,10 +42,12 @@ public class BreakingChangeCalculator {
         Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId = AnalysisHandler.getAllVersions(packageIdMap);
         Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion = AnalysisHandler.getMethodsPerVersion(results);
 
-        calculateMethodRemove(start, packageIdMap, versionsPerPackageId, methodsPerVersion);
+        Map<Major, BreakingChange> violations = calculateMethodRemove(start, packageIdMap, versionsPerPackageId, methodsPerVersion);
+        getOldCallableIds(context, violations);
+        writeBreakingChangesToFile(violations);
     }
 
-    public static void calculateMethodAddition(long start, Map<String, Map<String, PriorityQueue<Method>>> packageIdMap,
+    public static Map<Major, BreakingChange> calculateMethodAddition(long start, Map<String, Map<String, PriorityQueue<Method>>> packageIdMap,
                                                Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId,
                                                Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion) throws Exception {
 
@@ -76,10 +79,10 @@ public class BreakingChangeCalculator {
         System.out.println(incursions);
         System.out.println("Execution time: " + (System.nanoTime() - start) / 1000000 + "ms");
 
-        writeBreakingChangesToFile(incursions);
+        return incursions;
     }
 
-    public static void calculateMethodRemove(long start, Map<String, Map<String, PriorityQueue<Method>>> packageIdMap,
+    public static Map<Major, BreakingChange> calculateMethodRemove(long start, Map<String, Map<String, PriorityQueue<Method>>> packageIdMap,
                                              Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId,
                                              Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion) throws Exception {
         Map<Major, BreakingChange> incursions = new HashMap<>();
@@ -107,7 +110,7 @@ public class BreakingChangeCalculator {
         System.out.println(incursions);
         System.out.println("Execution time: " + (System.nanoTime() - start) / 1000000 + "ms");
 
-        writeBreakingChangesToFile(incursions);
+        return incursions;
     }
 
     public static void calculateViolations(PriorityQueue<Method> versions,
