@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static coordinates.CoordsProcessor.getExpandedCoords;
 import static versioning.AnalysisHandler.getMajor;
 import static versioning.AnalysisHandler.getOldCallableIds;
 
@@ -28,25 +29,37 @@ public class BreakingChangeCalculator {
                 "fasten", false);
     }
 
+    /**
+     * Runs the Java program.
+     * @param args: 0: String: Maven coordinates file
+     *              1: String: Violations output location
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
         long start = System.nanoTime();
         DSLContext context = getDbContext();
 
-        List<MavenId> coords = CoordsProcessor.readCoordsFile(Paths.get("").toAbsolutePath() + "/src/main/resources/mvn.expanded_coords.txt");
+        List<MavenId> coords = getExpandedCoords(Paths.get("").toAbsolutePath() + "/" + args[0], context);
         Set<Result<Record5<String, Long, String, String, Long>>> results = AnalysisHandler.findMethods(context, coords);
 
         Map<String, Map<String, PriorityQueue<Method>>> packageIdMap = AnalysisHandler.createPackageIdMap(results);
         Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId = AnalysisHandler.getAllVersions(packageIdMap);
-        Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion = AnalysisHandler.getMethodsPerVersion(results);
+        Map<Long, Integer> methodsPerVersion = AnalysisHandler.getMethodsPerVersion(results);
 
-        Map<Major, BreakingChange> violations = calculateMethodRemove(start, packageIdMap, versionsPerPackageId, methodsPerVersion);
-        getOldCallableIds(context, violations);
-        writeBreakingChangesToFile(violations);
+        System.out.println("Finished retrieval of required data. Beginning illegal API extensions calculation.");
+        Map<Major, BreakingChange> extensions = calculateMethodAddition(start, packageIdMap, versionsPerPackageId, methodsPerVersion);
+        System.out.println("Finished illegal API extensions calculation. Beginning breaking change calculation.");
+        Map<Major, BreakingChange> bc = calculateMethodRemove(start, packageIdMap, versionsPerPackageId, methodsPerVersion);
+
+        getOldCallableIds(context, bc, args[0]);
+
+        System.out.println("Finished breaking change calculation. Beginning file writing.");
+        writeBreakingChangesToFile(bc, args[1], "breaking_changes.txt");
+        writeBreakingChangesToFile(extensions, args[1], "api_extensions.txt");
     }
 
     public static Map<Major, BreakingChange> calculateMethodAddition(long start, Map<String, Map<String, PriorityQueue<Method>>> packageIdMap,
-                                               Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId,
-                                               Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion) throws Exception {
+                                               Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId, Map<Long, Integer> methodsPerVersion) {
 
         Map<Major, BreakingChange> incursions = new HashMap<>();
 
@@ -80,8 +93,7 @@ public class BreakingChangeCalculator {
     }
 
     public static Map<Major, BreakingChange> calculateMethodRemove(long start, Map<String, Map<String, PriorityQueue<Method>>> packageIdMap,
-                                             Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId,
-                                             Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion) throws Exception {
+                                             Map<Long, Set<DefaultArtifactVersion>> versionsPerPackageId, Map<Long, Integer> methodsPerVersion) {
         Map<Major, BreakingChange> incursions = new HashMap<>();
 
         for (Map<String, PriorityQueue<Method>> methods : packageIdMap.values()) {
@@ -113,9 +125,9 @@ public class BreakingChangeCalculator {
     public static void calculateViolations(PriorityQueue<Method> versions,
                                            PriorityQueue<DefaultArtifactVersion> subsequentVersionsWoWMethod,
                                            Map<Major, BreakingChange> violations, Method current,
-                                           Map<Long, Map<DefaultArtifactVersion, Integer>> methodsPerVersion) {
+                                           Map<Long, Integer> methodsPerVersion) {
         Major major = new Major(current.packageId, current.version,
-                methodsPerVersion.get(current.packageId).get(current.version), current.packageName);
+                methodsPerVersion.get(current.packageId), current.packageName);
         violations.putIfAbsent(major, new BreakingChange());
 
         if (versions.isEmpty()) {
@@ -142,11 +154,21 @@ public class BreakingChangeCalculator {
         }
     }
 
-    public static void writeBreakingChangesToFile(Map<Major, BreakingChange> incursions) throws IOException {
-        FileWriter fw = new FileWriter(Paths.get("").toAbsolutePath()+ "/src/main/resources/incursions.txt");
+    public static void writeBreakingChangesToFile(Map<Major, BreakingChange> incursions, String dir, String filename) throws IOException {
+        FileWriter fw = new FileWriter(Paths.get("").toAbsolutePath() + "/" + dir + "/" + filename);
         fw.write("Skip the first line when parsing this file. The format of this file is as follows: groupId:artifactId:majorVersion:#violations/#totalMethods:[callable.IDs with BC]\n");
         for (Major major : incursions.keySet()) {
             fw.write(major + ":" + incursions.get(major).incursions + "/" + major.numberOfMethods + ":" + incursions.get(major).incursing + "\n");
+        }
+        fw.close();
+    }
+
+    public static void writeCallableIdsToFile(Set<Result<Record5<String, Long, String, String, Long>>> results) throws IOException {
+        FileWriter fw = new FileWriter(Paths.get("").toAbsolutePath()+ "/src/main/resources/callables.txt");
+        for (Result<Record5<String, Long, String, String, Long>> result : results) {
+            for (Record5<String, Long, String, String, Long> record : result) {
+                fw.write(record.value5().toString() + ",");
+            }
         }
         fw.close();
     }

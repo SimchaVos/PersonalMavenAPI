@@ -88,8 +88,8 @@ public class AnalysisHandler {
         return results;
     }
 
-    public static void getOldCallableIds(DSLContext context, Map<Major, BreakingChange> violations) throws FileNotFoundException {
-        List<MavenId> coords = CoordsProcessor.readCoordsFile(Paths.get("").toAbsolutePath() + "/src/main/resources/artifacts.txt");
+    public static void getOldCallableIds(DSLContext context, Map<Major, BreakingChange> violations, String path) throws FileNotFoundException {
+        List<MavenId> coords = CoordsProcessor.readCoordsFile(path);
 
         for (BreakingChange bc : violations.values()) {
             for (Method method : bc.incursing) {
@@ -117,7 +117,7 @@ public class AnalysisHandler {
                 .and(DSL.field("callables.fasten_uri").eq(method.method))
                 .fetch();
 
-        return result.size() == 0 ? method.callableId : result.get(0).value1();
+        return result.size() == 0 ? -1 : result.get(0).value1();
     }
 
     /**
@@ -143,20 +143,22 @@ public class AnalysisHandler {
     }
 
     //                                                                                               Method, PackageID, Version
-    public static Map<Long, Map<DefaultArtifactVersion, Integer>> getMethodsPerVersion(Set<Result<Record5<String, Long, String, String, Long>>> results) {
-        Map<Long, Map<DefaultArtifactVersion, Integer>> versions = new HashMap<>();
+    public static Map<Long, Integer> getMethodsPerVersion(Set<Result<Record5<String, Long, String, String, Long>>> results) {
+        Map<Long, Set<String>> uris = new HashMap<>();
 
         for (Result<Record5<String, Long, String, String, Long>> result : results) {
             for (Record5<String, Long, String, String, Long> record : result) {
                 Long packageId = record.value2();
                 DefaultArtifactVersion version = new DefaultArtifactVersion(record.value3());
-                versions.putIfAbsent(packageId, new HashMap<>());
-                versions.get(packageId).putIfAbsent(version, 0);
-                int i = versions.get(packageId).get(version);
-                versions.get(packageId).put(version, i + 1);
+                uris.putIfAbsent(packageId, new HashSet<>());
+                uris.get(packageId).add(record.value1());
             }
         }
 
-        return versions;
+        Map<Long, Integer> methodCount = new HashMap<>();
+        for (Long artifact : uris.keySet()) {
+            methodCount.put(artifact, uris.get(artifact).size());
+        }
+        return methodCount;
     }
 }

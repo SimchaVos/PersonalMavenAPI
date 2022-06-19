@@ -2,7 +2,15 @@ package coordinates;
 
 import eu.f4sten.mavencrawler.utils.FileReader;
 import eu.f4sten.pomanalyzer.data.MavenId;
+import eu.fasten.core.data.metadatadb.codegen.enums.Access;
+import eu.fasten.core.data.metadatadb.codegen.tables.Callables;
+import eu.fasten.core.data.metadatadb.codegen.tables.PackageVersions;
+import eu.fasten.core.data.metadatadb.codegen.tables.Packages;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+import org.jooq.DSLContext;
+import org.jooq.Record1;
+import org.jooq.Result;
+import org.jooq.impl.DSL;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -12,31 +20,16 @@ import java.nio.file.Paths;
 import java.util.*;
 
 public class CoordsProcessor {
-    public static void main(String[] args) throws Exception {
-        writeCoordsFile(Paths.get("").toAbsolutePath() + "/src/main/resources/", getExpandedCoords());
-    }
+    public static List<MavenId> getExpandedCoords(String file, DSLContext context) throws Exception {
+        List<MavenId> input = readCoordsFile(file);
+        Set<MavenId> mavenIds = getVersionsOnServer(input, context);
 
-    public static List<MavenId> getExpandedCoords() throws Exception {
-        String resourcesPath = Paths.get("").toAbsolutePath() + "/src/main/resources/";
-        List<MavenId> input = readCoordsFile(resourcesPath + "artifacts.txt");
-        FileReader fr = new FileReader();
-        Set<MavenId> mavenIds = fr.readIndexFile(new File(resourcesPath + "nexus-maven-repository-index.gz"));
-
-        System.out.println("Done reading the Maven Index.");
-        List<MavenId> expandedMavenIds = extractAllVersions(input, mavenIds);
-        System.out.println("Total entries in Maven Index read: " + mavenIds.size());
-
-        return expandedMavenIds;
+        return extractAllVersions(input, mavenIds);
     }
 
     public static List<MavenId> extractAllVersions(List<MavenId> inputIds, Set<MavenId> maven) {
         List<MavenId> result = new ArrayList<>();
-        int i = 0;
         for (MavenId currInput : inputIds) {
-            if (i++ == inputIds.size() / 10) {
-                System.out.print("|");
-                i = 0;
-            }
             for (MavenId mavenId : maven) {
                 DefaultArtifactVersion inp_v = new DefaultArtifactVersion(currInput.version);
                 DefaultArtifactVersion mav_v = new DefaultArtifactVersion(mavenId.version);
@@ -77,5 +70,26 @@ public class CoordsProcessor {
         }
         sc.close();
         return coords;
+    }
+    
+    public static Set<MavenId> getVersionsOnServer(List<MavenId> mavenIds, DSLContext context) {
+        Set<MavenId> expandedIds = new HashSet<>();
+        
+        for (MavenId mavenId : mavenIds) {
+            Result<Record1<String>> result = context.select(PackageVersions.PACKAGE_VERSIONS.VERSION)
+                    .from("package_versions")
+                    .join("packages").on(DSL.field("package_versions.package_id").eq(DSL.field("packages.id")))
+                    .where(DSL.field("packages.package_name").eq(mavenId.groupId+":"+mavenId.artifactId))
+                    .fetch();
+
+            for (Record1<String> record : result) {
+                MavenId toAdd = new MavenId();
+                toAdd.groupId = mavenId.groupId;
+                toAdd.artifactId = mavenId.artifactId;
+                toAdd.version = record.value1();
+                expandedIds.add(toAdd);
+            }
+        }
+        return expandedIds;
     }
 }
