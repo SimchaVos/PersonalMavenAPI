@@ -1,9 +1,7 @@
 package versioning;
 
-import coordinates.CoordsProcessor;
 import eu.f4sten.pomanalyzer.data.MavenId;
 import eu.fasten.core.dbconnectors.PostgresConnector;
-import kotlin.random.Random;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.jooq.*;
 import versioning.entities.BreakingChange;
@@ -14,7 +12,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static versioning.AnalysisHandler.getMajor;
 import static versioning.AnalysisHandler.getOldCallableIds;

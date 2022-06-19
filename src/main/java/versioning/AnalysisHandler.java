@@ -93,11 +93,7 @@ public class AnalysisHandler {
 
         for (BreakingChange bc : violations.values()) {
             for (Method method : bc.incursing) {
-                if (method.version.toString().equals("1.2.18.3")) {
-                    int a = 1;
-                }
-                var l = getOldCallableId(context, method, coords);
-                method.callableId = l;
+                method.callableId = getOldCallableId(context, method, coords);
             }
         }
     }
