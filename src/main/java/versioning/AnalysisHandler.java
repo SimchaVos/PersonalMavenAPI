@@ -80,7 +80,10 @@ public class AnalysisHandler {
     Set<Result<Record5<String, Long, String, String, Long>>> findMethods(DSLContext context, List<MavenId> mavenIds) {
         Set<Result<Record5<String, Long, String, String, Long>>> results = new HashSet<Result<Record5<String, Long, String, String, Long>>>();
         for (MavenId mavenId : mavenIds) {
-            results.add(findMethodsPerArtifact(context, mavenId));
+            Result<Record5<String, Long, String, String, Long>> result = findMethodsPerArtifact(context, mavenId);
+            if (result.size() > 0) {
+                results.add(result);
+            }
         }
         return results;
     }
