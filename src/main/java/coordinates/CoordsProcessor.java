@@ -31,9 +31,7 @@ public class CoordsProcessor {
         List<MavenId> result = new ArrayList<>();
         for (MavenId currInput : inputIds) {
             for (MavenId mavenId : maven) {
-                DefaultArtifactVersion inp_v = new DefaultArtifactVersion(currInput.version);
-                DefaultArtifactVersion mav_v = new DefaultArtifactVersion(mavenId.version);
-                if (currInput.groupId.equals(mavenId.groupId) && currInput.artifactId.equals(mavenId.artifactId) && (inp_v.compareTo(mav_v) <= 0)) {
+                if (currInput.groupId.equals(mavenId.groupId) && currInput.artifactId.equals(mavenId.artifactId)) {
                     MavenId toAdd = new MavenId();
                     toAdd.groupId = mavenId.groupId;
                     toAdd.artifactId = mavenId.artifactId;
