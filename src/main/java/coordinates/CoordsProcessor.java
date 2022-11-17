@@ -38,7 +38,9 @@ public class CoordsProcessor {
                     toAdd.groupId = mavenId.groupId;
                     toAdd.artifactId = mavenId.artifactId;
                     toAdd.version = mavenId.version;
-                    result.add(toAdd);
+
+                    DefaultArtifactVersion version = new DefaultArtifactVersion(mavenId.version);
+                    if (version.getQualifier() == null) result.add(toAdd);
                 }
             }
         }
